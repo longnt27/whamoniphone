@@ -28,6 +28,41 @@ REQUIRED_ARTIFACTS = {
     "wham_world_step_export_report.json",
 }
 
+DOCUMENT_REQUIREMENTS = {
+    REPOSITORY_ROOT / "README.md": (
+        "YOLO26m-pose",
+        "HMR2SFrontend",
+        "HMR2STokenAdapter",
+        "WHAM_ImageStep",
+        "WHAM_WorldStep",
+        "xcodebuild",
+        "validate_final_evidence.py",
+    ),
+    REPOSITORY_ROOT / "docs" / "FINAL_REPORT.md": (
+        "3DPW test",
+        "11,349",
+        "PA-MPJPE",
+        "MPJPE",
+        "PVE",
+        "acceleration error",
+        "iPhone 11 Pro Max",
+        "187.13 ms",
+        "11.42 s",
+        "381.6 MB",
+        "YOLO stall",
+        "nominal",
+        "fair",
+        "evaluation/results/selected",
+        "Limitations",
+    ),
+    REPOSITORY_ROOT / "evaluation" / "README.md": (
+        "selected/manifest.json",
+        "validation",
+        "3DPW test",
+        "archive/experiments",
+    ),
+}
+
 SELECTED_YOLO = "yolo26m-pose"
 SELECTED_ADAPTER_SHA256 = (
     "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526"
@@ -207,6 +242,16 @@ def validate() -> list[str]:
         ]
     )
     errors.extend(message for passed, message in checks if not passed)
+    for path, required_fragments in DOCUMENT_REQUIREMENTS.items():
+        if not path.is_file():
+            errors.append(f"missing document: {path.relative_to(REPOSITORY_ROOT)}")
+            continue
+        contents = path.read_text(encoding="utf-8")
+        for fragment in required_fragments:
+            if fragment not in contents:
+                errors.append(
+                    f"{path.relative_to(REPOSITORY_ROOT)} is missing {fragment!r}"
+                )
     return errors
 
 
@@ -217,7 +262,10 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print(f"Final evidence validation passed ({len(REQUIRED_ARTIFACTS)} artifacts).")
+    print(
+        "Final evidence validation passed "
+        f"({len(REQUIRED_ARTIFACTS)} artifacts, {len(DOCUMENT_REQUIREMENTS)} documents)."
+    )
     return 0
 
 

@@ -1,7 +1,9 @@
 *.mlpackage
-WhamApp/WhamApp.xcodeproj
 *.DS_Store
 __pycache__/
 *.py[cod]
 .venv-coreml/
 repomix-output.*
+**/*.xcodeproj/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+*.xcuserstate

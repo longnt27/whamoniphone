@@ -1,0 +1,20 @@
+{
+  "coreml_relative_max_errors": {
+    "body_feet": 0.0016105392618184374,
+    "c_refiner_out": 0.004576090667309929,
+    "h_refiner_out": 0.0043111004826343995,
+    "joints_world": 0.0027259202923443863,
+    "refined_root": 0.0002744057993216689,
+    "refined_translation": 0.001285559073707126,
+    "refined_velocity": 0.001285559073707126,
+    "unrefined_root": 0.000191622568833015,
+    "unrefined_translation": 0.00026466524338907775,
+    "vertices_world": 0.0032894418135310075,
+    "world_feet": 0.0014087378573227206
+  },
+  "hmr2s_checkpoint_sha256": "823728e846c901c75edb12d469fa240e07606a24cfd44c208244a94bb26fc423",
+  "operation": "conversion_only_no_training",
+  "output": "/Users/tlng/projects/whamoniphone/WhamApp/WhamApp/WHAM_WorldStep.mlpackage",
+  "schema_version": 1,
+  "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf"
+}

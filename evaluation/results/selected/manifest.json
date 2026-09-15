@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "selection": {
+    "pipeline": "YOLO26m-pose -> released HMR2.0-S -> selected residual token adapter -> released split WHAM -> light causal smoothing",
+    "selection_split": "3DPW validation",
+    "locked_test_split": "3DPW test",
+    "device": "iPhone 11 Pro Max (iPhone12,5)"
+  },
+  "artifacts": {
+    "yolo26_grid_validation.json": {
+      "sha256": "6f9857f9697669c07be114fc87a45e6b4320793ce72c55477ec7167836fe3510",
+      "source": "hmr2s_yolo26_grid_reports.zip",
+      "role": "validation-only six-candidate grid and locked winner"
+    },
+    "yolo26_grid_validation.csv": {
+      "sha256": "20f60ec8612d08eb5a297f3507ab5956814a7af9e42cb5effe7e2438c4e0667d",
+      "source": "hmr2s_yolo26_grid_reports.zip",
+      "role": "tabular validation grid"
+    },
+    "yolo26_grid_final_3dpw.json": {
+      "sha256": "bfcc847b10389d694d72e7fc128bdcd11d441b4b8a0b4d7ba946a398ddee356a",
+      "source": "hmr2s_yolo26_grid_reports.zip",
+      "role": "untouched 3DPW test evaluation after winner lock"
+    },
+    "yolo26_grid_final_3dpw.csv": {
+      "sha256": "e6621911060b544cc555f1b5a8a629255d323259e0950d2017a263c0825d1485",
+      "source": "hmr2s_yolo26_grid_reports.zip",
+      "role": "per-track and aggregate final metrics"
+    },
+    "selected_deployment_artifact.json": {
+      "sha256": "4c390db7a081f2c2a0c9037e7b32644d152e20fb6558ad86bbd6c6a277010a4d",
+      "source": "hmr2s_yolo26_grid_reports.zip",
+      "role": "selected detector and adapter checkpoint identity"
+    },
+    "hmr2s_temporal_smoothing_3dpw.json": {
+      "sha256": "befa6574fbf653edafe06393ca0e19c4448bd990a669dd08c8f1388c2a4ea1fc",
+      "source": "hmr2s_temporal_smoothing_reports.zip",
+      "role": "validation-selected smoothing and locked test comparison"
+    },
+    "hmr2s_temporal_smoothing_3dpw.csv": {
+      "sha256": "ee087460ffc6962e82388c67da88394cf42e9304803fe499240750e2696d7e79",
+      "source": "hmr2s_temporal_smoothing_reports.zip",
+      "role": "tabular smoothing comparison"
+    },
+    "selected_mobile_pipeline_device_benchmark.json": {
+      "sha256": "3b1fcca674fd203b3cf87139861b4f98da379c68c2dfe1de8c64810992829937",
+      "source": "selected_mobile_pipeline_device_benchmark.json shared from the iOS app",
+      "role": "physical-device latency, memory, thermal, and connectivity evidence"
+    },
+    "hmr2s_coreml_export_report.json": {
+      "sha256": "d131c7f262c897104ae41eda650202f09b3f0249019095a43146698bf0e28337",
+      "source": "tools/export/export_hmr2s_coreml.py",
+      "role": "HMR2-S Core ML numerical conversion check"
+    },
+    "hmr2s_token_adapter_export_report.json": {
+      "sha256": "a60317f5762ca57911f7f7fad843842bcfce0972d5f4c85f4a6c84e7e0d6bd34",
+      "source": "tools/export/export_hmr2s_token_adapter.py",
+      "role": "selected adapter Core ML numerical conversion check"
+    },
+    "wham_world_step_export_report.json": {
+      "sha256": "1d4a02c93cc54a2eac6863832b07745d630577b2bfccffd4a0cc99107516f680",
+      "source": "tools/export/export_wham_world_step.py",
+      "role": "WHAM SMPL/world/refiner Core ML numerical conversion check"
+    }
+  }
+}

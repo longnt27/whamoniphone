@@ -1,0 +1,8 @@
+{
+  "yolo_variant": "yolo26m-pose",
+  "candidate": "adapter_hmr2s_released_wham",
+  "checkpoint_relative_to_output": "m/hmr2s_to_hmr2a_adapter_best.pth",
+  "checkpoint_bytes": 8418213,
+  "checkpoint_sha256": "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526",
+  "official_yolo_sha256": "2fbf16367022256a226035695c5c389384c6706e8bb8ab8fcd0e7976f05443c4"
+}

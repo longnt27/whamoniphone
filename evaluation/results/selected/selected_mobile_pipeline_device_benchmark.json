@@ -1,0 +1,188 @@
+{
+  "approximateSmoothingDelayMillisecondsAt30FPS" : 11.11111111111111,
+  "bundledModelBytes" : {
+    "HMR2SFrontend" : 47472865,
+    "HMR2SSMPLInit" : 10220320,
+    "HMR2STokenAdapter" : 4209132,
+    "WHAM_I" : 24601901,
+    "WHAM_ImageStep" : 94803254,
+    "WHAM_WorldStep" : 19049777,
+    "yolo26m-pose" : 43446531
+  },
+  "createdAt" : "2026-09-15T10:20:22Z",
+  "device" : "iOS device (iPhone12,5)",
+  "imageFeatureConnectionPassed" : true,
+  "imageFeaturePoseMaxDelta" : 0.107421875,
+  "metrics" : [
+    {
+      "meanMilliseconds" : 6611.287459,
+      "p50Milliseconds" : 6611.287459,
+      "p95Milliseconds" : 6611.287459,
+      "samples" : 1,
+      "stage" : "load_yolo26m_pose"
+    },
+    {
+      "meanMilliseconds" : 2182.65225,
+      "p50Milliseconds" : 2182.65225,
+      "p95Milliseconds" : 2182.65225,
+      "samples" : 1,
+      "stage" : "load_hmr2s_frontend"
+    },
+    {
+      "meanMilliseconds" : 246.975833,
+      "p50Milliseconds" : 246.975833,
+      "p95Milliseconds" : 246.975833,
+      "samples" : 1,
+      "stage" : "load_hmr2s_smpl_init"
+    },
+    {
+      "meanMilliseconds" : 73.967667,
+      "p50Milliseconds" : 73.967667,
+      "p95Milliseconds" : 73.967667,
+      "samples" : 1,
+      "stage" : "load_hmr2s_token_adapter"
+    },
+    {
+      "meanMilliseconds" : 115.471167,
+      "p50Milliseconds" : 115.471167,
+      "p95Milliseconds" : 115.471167,
+      "samples" : 1,
+      "stage" : "load_wham_init"
+    },
+    {
+      "meanMilliseconds" : 1020.191916,
+      "p50Milliseconds" : 1020.191916,
+      "p95Milliseconds" : 1020.191916,
+      "samples" : 1,
+      "stage" : "load_wham_image_step"
+    },
+    {
+      "meanMilliseconds" : 1174.164,
+      "p50Milliseconds" : 1174.164,
+      "p95Milliseconds" : 1174.164,
+      "samples" : 1,
+      "stage" : "load_wham_world_step"
+    },
+    {
+      "meanMilliseconds" : 3570.0527386249996,
+      "p50Milliseconds" : 70.0010835,
+      "p95Milliseconds" : 265.6799958499998,
+      "samples" : 40,
+      "stage" : "yolo26m_pose_and_parse"
+    },
+    {
+      "meanMilliseconds" : 2.8089146000000005,
+      "p50Milliseconds" : 1.8825835,
+      "p95Milliseconds" : 4.788647949999999,
+      "samples" : 40,
+      "stage" : "crop_and_keypoint_normalization"
+    },
+    {
+      "meanMilliseconds" : 73.90252704999997,
+      "p50Milliseconds" : 68.192958,
+      "p95Milliseconds" : 95.49738089999981,
+      "samples" : 40,
+      "stage" : "hmr2s_frontend"
+    },
+    {
+      "meanMilliseconds" : 1.1344261142857146,
+      "p50Milliseconds" : 0.6695,
+      "p95Milliseconds" : 2.412337399999995,
+      "samples" : 35,
+      "stage" : "hmr2s_token_adapter"
+    },
+    {
+      "meanMilliseconds" : 10.3531498,
+      "p50Milliseconds" : 11.351958,
+      "p95Milliseconds" : 14.9273998,
+      "samples" : 5,
+      "stage" : "hmr2s_first_frame_smpl_init"
+    },
+    {
+      "meanMilliseconds" : 12.7712,
+      "p50Milliseconds" : 6.013542,
+      "p95Milliseconds" : 32.0313166,
+      "samples" : 5,
+      "stage" : "wham_init"
+    },
+    {
+      "meanMilliseconds" : 25.292025114285718,
+      "p50Milliseconds" : 14.100167,
+      "p95Milliseconds" : 77.6244160999999,
+      "samples" : 35,
+      "stage" : "wham_recurrent_step"
+    },
+    {
+      "meanMilliseconds" : 0.3268797714285714,
+      "p50Milliseconds" : 0.138083,
+      "p95Milliseconds" : 0.8192661999999999,
+      "samples" : 35,
+      "stage" : "temporal_output_smoothing"
+    },
+    {
+      "meanMilliseconds" : 9.917396314285714,
+      "p50Milliseconds" : 7.151875,
+      "p95Milliseconds" : 24.88719979999999,
+      "samples" : 35,
+      "stage" : "wham_smpl_world_refiner_step"
+    },
+    {
+      "meanMilliseconds" : 29467.9847252,
+      "p50Milliseconds" : 1497.066,
+      "p95Milliseconds" : 113455.27723339999,
+      "samples" : 5,
+      "stage" : "end_to_end_8_frame_track"
+    },
+    {
+      "meanMilliseconds" : 3683.49809065,
+      "p50Milliseconds" : 187.13325,
+      "p95Milliseconds" : 14181.909654174999,
+      "samples" : 5,
+      "stage" : "amortized_end_to_end_source_frame"
+    }
+  ],
+  "modelProvenance" : {
+    "hmr2s_checkpoint_sha256" : "823728e846c901c75edb12d469fa240e07606a24cfd44c208244a94bb26fc423",
+    "hmr2s_commit" : "d69218f411e003621f29df1940b23b076067fad1",
+    "hmr2s_repository" : "https:\/\/github.com\/nttcom\/TruncHierVFM.git",
+    "token_adapter_checkpoint_sha256" : "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526",
+    "training_performed_by_this_project" : "false",
+    "wham_checkpoint_sha256" : "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+    "wham_commit" : "2b54f7797391c94876848b905ed875b154c4a295",
+    "wham_repository" : "https:\/\/github.com\/yohanshin\/WHAM.git",
+    "yolo26_variant" : "yolo26m-pose",
+    "yolo26_weights_sha256" : "2fbf16367022256a226035695c5c389384c6706e8bb8ab8fcd0e7976f05443c4"
+  },
+  "notes" : [
+    "Run a Release build on a physical iPhone with Low Power Mode off.",
+    "One untimed full-track warm-up precedes the measured passes.",
+    "HMR2.0-S supplies both the real 1024-D feature and real first-frame SMPL\/3D-joint initialization; there is no neutral or zero initializer fallback.",
+    "The 3DPW-validation-selected residual adapter maps every recurrent HMR2-S token into WHAM's expected HMR2a token space.",
+    "The image-feature A\/B guard holds motion and recurrent state fixed and must change WHAM pose output.",
+    "Light causal geodesic pose smoothing (alpha 0.75) and shape EMA (alpha 0.35) are applied after WHAM and never fed back into its recurrent state.",
+    "The bundled still frames have no gyroscope stream, so cam_a_step is zero. Its tensor path still runs with the same shape.",
+    "WHAM_WorldStep emits the 6,890-vertex world-space SMPL mesh and keeps trajectory-refiner state explicit, preventing Core ML from unrolling a full clip.",
+    "The Kaggle report supplies camera-relative accuracy; this report supplies physical-iPhone latency, model bytes, memory, and thermal state."
+  ],
+  "operatingSystem" : "Version 18.6.2 (Build 22G100)",
+  "outputSmoothingConnectionPassed" : true,
+  "outputSmoothingPoseMaxDelta" : 0.24414062,
+  "passes" : 5,
+  "peakResidentMemoryBytes" : 381583360,
+  "personDetections" : 40,
+  "pipeline" : "YOLO26m-pose → released HMR2.0-S → selected token adapter → released split WHAM → light causal smoothing",
+  "poseDetector" : "YOLO26m-pose",
+  "processedSourceFrames" : 40,
+  "residentMemoryAfterBytes" : 373915648,
+  "residentMemoryBeforeBytes" : 163250176,
+  "sampleFrames" : 8,
+  "sampleSet" : "8 frames sampled from the official WHAM IMG_9730 example",
+  "schemaVersion" : 8,
+  "scope" : "Validation-selected end-to-end learned pipeline through SMPL mesh generation, contact-aware trajectory refinement, world-space rollout, and causal output smoothing. Static test images use zero camera angular velocity; accuracy is measured separately on 3DPW.",
+  "selectedPipelineModelBytes" : 243803780,
+  "smoothingPoseAlpha" : 0.75,
+  "smoothingShapeAlpha" : 0.35,
+  "thermalStateAfter" : "fair",
+  "thermalStateBefore" : "nominal",
+  "trainingPerformed" : false
+}

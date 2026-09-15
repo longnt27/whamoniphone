@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "experiment": "frozen_released_wham_vs_frozen_phone_candidate",
+  "training_performed": false,
+  "protocol": {
+    "dataset": "3DPW test",
+    "population": "all matching single-person tracks with a valid initializer-frame YOLO26 detection",
+    "selected_tracks_before_detection_guard": 11,
+    "completed_same_population_tracks": 11,
+    "recurrent_frames_per_variant": 11349,
+    "maximum_frames_per_track": 0,
+    "released_wham": "stored official ViTPose/HMR2a observations and initialization; flip average; released WHAM weights",
+    "frozen_phone_candidate": "YOLO26n-pose; released HMR2.0-S 1024-D token and first-frame SMPL initialization; released WHAM weights; no flip",
+    "same_population": true,
+    "world_grounded": false,
+    "camera_signal": "zero angular velocity, matching WHAM's 3DPW protocol; prerecorded 3DPW has no phone gyroscope stream",
+    "metric_decode": "gendered licensed SMPL and H36M J14 regressor, evaluation only",
+    "latency_warning": "work_seconds is batched Kaggle throughput and is not iPhone latency",
+    "refiner_note": "WHAM's contact trajectory refiner changes world trajectory, not the camera-relative pose/shape used by these four metrics"
+  },
+  "provenance": {
+    "wham_repository": "https://github.com/yohanshin/WHAM.git",
+    "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+    "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+    "hmr2s_repository": "https://github.com/nttcom/TruncHierVFM.git",
+    "hmr2s_commit": "d69218f411e003621f29df1940b23b076067fad1",
+    "hmr2s_checkpoint_sha256": "823728e846c901c75edb12d469fa240e07606a24cfd44c208244a94bb26fc423",
+    "hmr2s_parameter_count": 23969309,
+    "yolo26_weights_sha256": "eb3bb8268828aeaf515cec23a4bfafd793944a86fe9af94ba7823609c14522a9",
+    "parsed_3dpw_sha256": "cccd6023e0dce846a8b9376445fd977fe2caa5868f841821a816a6cb4e37b17e",
+    "h36m_regressor_sha256": "c655cd7013d7829eb9acbebf0e43f952a3fa0305a53c35880e39192bfb6444a0",
+    "wham_joint_regressor_sha256": "f938dcfd5cd88d0b19ee34e442d49f1dc370d3d8c4f5aef57a93d0cf2e267c4c"
+  },
+  "detection": {
+    "detections": 11127,
+    "source_frames_including_skipped_tracks": 11360,
+    "rate": 0.9794894366197183,
+    "initializer_track_success_rate": 1.0,
+    "skipped_tracks": []
+  },
+  "variants": {
+    "released_wham": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 32.66937072048713,
+          "p50": 28.466869354248047,
+          "p95": 59.227034759521494,
+          "max": 154.8671417236328
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 55.57580911372661,
+          "p50": 51.22311019897461,
+          "p95": 91.11150665283203,
+          "max": 336.0549011230469
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 65.6364644886124,
+          "p50": 60.21247482299805,
+          "p95": 107.67175903320313,
+          "max": 341.62725830078125
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 6.226210307692702,
+          "p50": 4.801836967468262,
+          "p95": 13.031492614746092,
+          "max": 275.98284912109375
+        }
+      },
+      "work_seconds": {
+        "wham_body_core_and_flip": 41.588410770999985,
+        "smpl_metric_decode": 2.7675563680001005
+      }
+    },
+    "frozen_phone_candidate": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 91.43287990279991,
+          "p50": 82.67818450927734,
+          "p95": 160.47886657714844,
+          "max": 276.0979919433594
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 187.35059764477867,
+          "p50": 170.58200073242188,
+          "p95": 328.4465698242188,
+          "max": 604.7562255859375
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 216.51559083578775,
+          "p50": 196.60899353027344,
+          "p95": 371.16898803710944,
+          "max": 667.6363525390625
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 10.593253785303238,
+          "p50": 6.221884727478027,
+          "p95": 31.338306045532207,
+          "max": 548.4642944335938
+        }
+      },
+      "work_seconds": {
+        "wham_body_core": 20.23758782399989,
+        "yolo26": 88.48131057999984,
+        "hmr2s": 42.968406542998366,
+        "smpl_metric_decode": 1.3346800130000815
+      }
+    }
+  },
+  "phone_minus_released_same_population": {
+    "pa_mpjpe_mm": 58.76350918231278,
+    "mpjpe_mm": 131.77478853105205,
+    "pve_mm": 150.87912634717534,
+    "accel_official_30fps": 4.367043477610537
+  },
+  "phone_relative_change_vs_released_same_population": {
+    "pa_mpjpe_mm": 1.7987340400610128,
+    "mpjpe_mm": 2.3710817823883943,
+    "pve_mm": 2.2987089192372956,
+    "accel_official_30fps": 0.7013967183560923
+  }
+}

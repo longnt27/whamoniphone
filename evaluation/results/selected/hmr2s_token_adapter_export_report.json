@@ -1,0 +1,13 @@
+{
+  "checkpoint_metadata": {
+    "selected_epoch": 5,
+    "uses_learned_adapter": true
+  },
+  "checkpoint_sha256": "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526",
+  "coreml_relative_max_error": 0.0023111612380696646,
+  "hidden_dimension": 1024,
+  "operation": "conversion_only_no_training",
+  "output": "/Users/tlng/projects/whamoniphone/WhamApp/WhamApp/HMR2STokenAdapter.mlpackage",
+  "parameter_count": 2101248,
+  "schema_version": 1
+}

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "experiment": "yolo26_pose_size_by_hmr2s_wham_adaptation_grid",
+  "protocol": {
+    "grid": "YOLO26n/s/m-pose x token adapter/native-token WHAM fine-tune",
+    "candidate_count": 6,
+    "selection_split": "3DPW validation only",
+    "test_status_at_selection": "not loaded by any training process",
+    "selection_rule": "lowest absolute PA-MPJPE; deterministic tie-breaks are MPJPE, PVE, acceleration, YOLO key, candidate name",
+    "fixed_across_grid": "data budget, splits, seed, crop policy, losses, epochs, batch sizes, confidence and IoU thresholds"
+  },
+  "candidates": [
+    {
+      "yolo_key": "n",
+      "yolo_variant": "yolo26n-pose",
+      "candidate": "adapter_hmr2s_released_wham",
+      "within_yolo_score_vs_naive": 0.5513824992474866,
+      "pa_mpjpe_mm": 49.4066114015736,
+      "mpjpe_mm": 72.89816561078804,
+      "pve_mm": 86.5291378850732,
+      "accel_official_30fps": 13.708413036739861,
+      "selected_epoch": 6,
+      "selected_stage": "token_adapter"
+    },
+    {
+      "yolo_key": "n",
+      "yolo_variant": "yolo26n-pose",
+      "candidate": "native_hmr2s_tuned_wham",
+      "within_yolo_score_vs_naive": 0.7124417168341888,
+      "pa_mpjpe_mm": 66.01731759709142,
+      "mpjpe_mm": 98.08640579548356,
+      "pve_mm": 115.2847096732132,
+      "accel_official_30fps": 15.197164608927071,
+      "selected_epoch": 4,
+      "selected_stage": "decoder"
+    },
+    {
+      "yolo_key": "s",
+      "yolo_variant": "yolo26s-pose",
+      "candidate": "adapter_hmr2s_released_wham",
+      "within_yolo_score_vs_naive": 0.5371822818664361,
+      "pa_mpjpe_mm": 47.330862314953265,
+      "mpjpe_mm": 69.1783069356604,
+      "pve_mm": 82.5363201297289,
+      "accel_official_30fps": 12.066137974395145,
+      "selected_epoch": 6,
+      "selected_stage": "token_adapter"
+    },
+    {
+      "yolo_key": "s",
+      "yolo_variant": "yolo26s-pose",
+      "candidate": "native_hmr2s_tuned_wham",
+      "within_yolo_score_vs_naive": 0.7000206265782971,
+      "pa_mpjpe_mm": 62.80222831835387,
+      "mpjpe_mm": 96.00292226387084,
+      "pve_mm": 113.86202895385125,
+      "accel_official_30fps": 13.229132066280707,
+      "selected_epoch": 3,
+      "selected_stage": "integration"
+    },
+    {
+      "yolo_key": "m",
+      "yolo_variant": "yolo26m-pose",
+      "candidate": "adapter_hmr2s_released_wham",
+      "within_yolo_score_vs_naive": 0.5328854791174149,
+      "pa_mpjpe_mm": 45.890263680812936,
+      "mpjpe_mm": 67.90823732224186,
+      "pve_mm": 81.29496601006676,
+      "accel_official_30fps": 11.520411493736473,
+      "selected_epoch": 5,
+      "selected_stage": "token_adapter"
+    },
+    {
+      "yolo_key": "m",
+      "yolo_variant": "yolo26m-pose",
+      "candidate": "native_hmr2s_tuned_wham",
+      "within_yolo_score_vs_naive": 0.6731005987598309,
+      "pa_mpjpe_mm": 58.795889143495685,
+      "mpjpe_mm": 88.79502203129938,
+      "pve_mm": 105.14733262510175,
+      "accel_official_30fps": 13.258981528405906,
+      "selected_epoch": 2,
+      "selected_stage": "integration"
+    }
+  ],
+  "locked_winner": {
+    "yolo_key": "m",
+    "yolo_variant": "yolo26m-pose",
+    "candidate": "adapter_hmr2s_released_wham",
+    "within_yolo_score_vs_naive": 0.5328854791174149,
+    "pa_mpjpe_mm": 45.890263680812936,
+    "mpjpe_mm": 67.90823732224186,
+    "pve_mm": 81.29496601006676,
+    "accel_official_30fps": 11.520411493736473,
+    "selected_epoch": 5,
+    "selected_stage": "token_adapter"
+  }
+}

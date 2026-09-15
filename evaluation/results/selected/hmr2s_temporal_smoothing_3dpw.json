@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "experiment": "causal_output_smoothing_ablation",
+  "protocol": {
+    "pipeline": "YOLO26m-pose + released HMR2.0-S + selected token adapter + released WHAM",
+    "filter_location": "after WHAM pose/shape output; model inputs are unchanged",
+    "filter_type": "causal geodesic exponential smoothing for rotations; causal EMA for shape",
+    "selection_split": "3DPW validation",
+    "test_split_opened_after_filter_lock": true,
+    "selection_score": "40% PA-MPJPE, 25% MPJPE, 25% PVE, 10% acceleration, normalized to raw",
+    "selection_gate": "no spatial validation metric may regress by more than 5%",
+    "camera_signal": "zero angular velocity because 3DPW has no phone gyroscope stream",
+    "latency_note": "group-delay estimates describe the pose EMA at low frequency; actual Core ML/Swift cost must be measured on iPhone"
+  },
+  "filters": {
+    "raw": {
+      "pose_alpha": 1.0,
+      "shape_alpha": 1.0,
+      "approximate_low_frequency_group_delay_frames": 0.0,
+      "approximate_low_frequency_group_delay_ms_at_30fps": 0.0
+    },
+    "light": {
+      "pose_alpha": 0.75,
+      "shape_alpha": 0.35,
+      "approximate_low_frequency_group_delay_frames": 0.3333333333333333,
+      "approximate_low_frequency_group_delay_ms_at_30fps": 11.11111111111111
+    },
+    "medium": {
+      "pose_alpha": 0.55,
+      "shape_alpha": 0.2,
+      "approximate_low_frequency_group_delay_frames": 0.818181818181818,
+      "approximate_low_frequency_group_delay_ms_at_30fps": 27.272727272727266
+    },
+    "strong": {
+      "pose_alpha": 0.35,
+      "shape_alpha": 0.1,
+      "approximate_low_frequency_group_delay_frames": 1.8571428571428574,
+      "approximate_low_frequency_group_delay_ms_at_30fps": 61.90476190476191
+    }
+  },
+  "validation": {
+    "variants": {
+      "raw": {
+        "parameters": {
+          "pose_alpha": 1.0,
+          "shape_alpha": 1.0
+        },
+        "metrics": {
+          "pa_mpjpe_mm": {
+            "samples": 2373,
+            "mean": 45.890411792100856,
+            "p50": 40.546775817871094,
+            "p95": 90.79185791015625,
+            "max": 223.29251098632812
+          },
+          "mpjpe_mm": {
+            "samples": 2373,
+            "mean": 67.90870404313799,
+            "p50": 60.510589599609375,
+            "p95": 130.0517028808594,
+            "max": 352.6423645019531
+          },
+          "pve_mm": {
+            "samples": 2373,
+            "mean": 81.29564943807918,
+            "p50": 72.96316528320312,
+            "p95": 153.2119903564453,
+            "max": 333.51446533203125
+          },
+          "accel_official_30fps": {
+            "samples": 2341,
+            "mean": 11.520250997282103,
+            "p50": 7.98180627822876,
+            "p95": 30.436742782592773,
+            "max": 329.251953125
+          }
+        },
+        "filter_seconds_python_scipy": 0.00010275200003206919,
+        "score_vs_raw": 1.0,
+        "spatial_gate_passed": true
+      },
+      "light": {
+        "parameters": {
+          "pose_alpha": 0.75,
+          "shape_alpha": 0.35
+        },
+        "metrics": {
+          "pa_mpjpe_mm": {
+            "samples": 2373,
+            "mean": 45.61385034158468,
+            "p50": 40.075416564941406,
+            "p95": 89.72135925292969,
+            "max": 207.313232421875
+          },
+          "mpjpe_mm": {
+            "samples": 2373,
+            "mean": 67.92477431861951,
+            "p50": 60.59358215332031,
+            "p95": 126.54693908691407,
+            "max": 337.25909423828125
+          },
+          "pve_mm": {
+            "samples": 2373,
+            "mean": 81.40330452724092,
+            "p50": 73.10905456542969,
+            "p95": 150.36851501464844,
+            "max": 320.39544677734375
+          },
+          "accel_official_30fps": {
+            "samples": 2341,
+            "mean": 10.296548398245811,
+            "p50": 7.129153251647949,
+            "p95": 26.19046974182129,
+            "max": 327.80889892578125
+          }
+        },
+        "filter_seconds_python_scipy": 0.8989695170000687,
+        "score_vs_raw": 0.9873574096543719,
+        "spatial_gate_passed": true
+      },
+      "medium": {
+        "parameters": {
+          "pose_alpha": 0.55,
+          "shape_alpha": 0.2
+        },
+        "metrics": {
+          "pa_mpjpe_mm": {
+            "samples": 2373,
+            "mean": 45.964335406223434,
+            "p50": 41.308895111083984,
+            "p95": 89.3114486694336,
+            "max": 184.884765625
+          },
+          "mpjpe_mm": {
+            "samples": 2373,
+            "mean": 68.70330355290969,
+            "p50": 61.768985748291016,
+            "p95": 126.4438247680664,
+            "max": 315.8709716796875
+          },
+          "pve_mm": {
+            "samples": 2373,
+            "mean": 82.3367477888002,
+            "p50": 74.34136199951172,
+            "p95": 152.2375030517578,
+            "max": 331.5837707519531
+          },
+          "accel_official_30fps": {
+            "samples": 2341,
+            "mean": 9.475837196507092,
+            "p50": 6.61232328414917,
+            "p95": 23.893423080444336,
+            "max": 322.62518310546875
+          }
+        },
+        "filter_seconds_python_scipy": 0.8894600889998969,
+        "score_vs_raw": 0.9890249180783646,
+        "spatial_gate_passed": true
+      },
+      "strong": {
+        "parameters": {
+          "pose_alpha": 0.35,
+          "shape_alpha": 0.1
+        },
+        "metrics": {
+          "pa_mpjpe_mm": {
+            "samples": 2373,
+            "mean": 48.68776063320258,
+            "p50": 44.81245422363281,
+            "p95": 90.50127716064455,
+            "max": 173.6190643310547
+          },
+          "mpjpe_mm": {
+            "samples": 2373,
+            "mean": 72.2296538073656,
+            "p50": 66.3047866821289,
+            "p95": 127.86346893310548,
+            "max": 287.7087707519531
+          },
+          "pve_mm": {
+            "samples": 2373,
+            "mean": 86.32038807778534,
+            "p50": 78.65776824951172,
+            "p95": 155.5424987792969,
+            "max": 353.6453857421875
+          },
+          "accel_official_30fps": {
+            "samples": 2341,
+            "mean": 8.835386575885126,
+            "p50": 6.182018280029297,
+            "p95": 21.337738037109375,
+            "max": 313.7264404296875
+          }
+        },
+        "filter_seconds_python_scipy": 0.8814108930000089,
+        "score_vs_raw": 1.0324365083496465,
+        "spatial_gate_passed": false
+      }
+    },
+    "population": {
+      "requested_tracks": 8,
+      "completed_tracks": 8,
+      "source_frames": 2381,
+      "detections": 2379,
+      "detection_rate": 0.999160016799664,
+      "skipped": []
+    }
+  },
+  "locked_filter": "light",
+  "test": {
+    "variants": {
+      "raw": {
+        "parameters": {
+          "pose_alpha": 1.0,
+          "shape_alpha": 1.0
+        },
+        "metrics": {
+          "pa_mpjpe_mm": {
+            "samples": 11349,
+            "mean": 51.76733599550263,
+            "p50": 44.3159294128418,
+            "p95": 108.98889465332033,
+            "max": 225.0052947998047
+          },
+          "mpjpe_mm": {
+            "samples": 11349,
+            "mean": 91.90692351809555,
+            "p50": 72.89954376220703,
+            "p95": 256.05619506835944,
+            "max": 516.1466064453125
+          },
+          "pve_mm": {
+            "samples": 11349,
+            "mean": 107.03011996223597,
+            "p50": 86.0531005859375,
+            "p95": 289.38699340820324,
+            "max": 608.8388061523438
+          },
+          "accel_official_30fps": {
+            "samples": 11305,
+            "mean": 12.529941673468088,
+            "p50": 6.319112300872803,
+            "p95": 41.92807006835935,
+            "max": 507.0869445800781
+          }
+        },
+        "filter_seconds_python_scipy": 0.00018486700014364033
+      },
+      "light": {
+        "parameters": {
+          "pose_alpha": 0.75,
+          "shape_alpha": 0.35
+        },
+        "metrics": {
+          "pa_mpjpe_mm": {
+            "samples": 11349,
+            "mean": 51.7984296564426,
+            "p50": 44.585472106933594,
+            "p95": 107.75001983642579,
+            "max": 223.45980834960938
+          },
+          "mpjpe_mm": {
+            "samples": 11349,
+            "mean": 92.06258215296268,
+            "p50": 73.14030456542969,
+            "p95": 255.36995849609377,
+            "max": 506.586181640625
+          },
+          "pve_mm": {
+            "samples": 11349,
+            "mean": 107.2021428112501,
+            "p50": 86.53226470947266,
+            "p95": 288.95690307617195,
+            "max": 597.9163208007812
+          },
+          "accel_official_30fps": {
+            "samples": 11305,
+            "mean": 10.722146670004268,
+            "p50": 5.727113723754883,
+            "p95": 33.91877059936523,
+            "max": 399.0299072265625
+          }
+        },
+        "filter_seconds_python_scipy": 4.29347743400001
+      }
+    },
+    "population": {
+      "requested_tracks": 11,
+      "completed_tracks": 11,
+      "source_frames": 11360,
+      "detections": 11306,
+      "detection_rate": 0.9952464788732395,
+      "skipped": []
+    }
+  },
+  "decision": {
+    "worth_smoothing": true,
+    "locked_filter": "light",
+    "test_selected_minus_raw": {
+      "pa_mpjpe_mm": 0.031093660939973233,
+      "mpjpe_mm": 0.15565863486712317,
+      "pve_mm": 0.17202284901412668,
+      "accel_official_30fps": -1.80779500346382
+    },
+    "test_selected_relative_change_vs_raw": {
+      "pa_mpjpe_mm": 0.000600642477385227,
+      "mpjpe_mm": 0.0016936551557671375,
+      "pve_mm": 0.001607237748353585,
+      "accel_official_30fps": -0.1442780062808905
+    },
+    "raw_test_metrics": {
+      "pa_mpjpe_mm": 51.76733599550263,
+      "mpjpe_mm": 91.90692351809555,
+      "pve_mm": 107.03011996223597,
+      "accel_official_30fps": 12.529941673468088
+    },
+    "selected_test_metrics": {
+      "pa_mpjpe_mm": 51.7984296564426,
+      "mpjpe_mm": 92.06258215296268,
+      "pve_mm": 107.2021428112501,
+      "accel_official_30fps": 10.722146670004268
+    }
+  },
+  "provenance": {
+    "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+    "hmr2s_commit": "d69218f411e003621f29df1940b23b076067fad1",
+    "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+    "hmr2s_checkpoint_sha256": "823728e846c901c75edb12d469fa240e07606a24cfd44c208244a94bb26fc423",
+    "yolo26m_checkpoint_sha256": "2fbf16367022256a226035695c5c389384c6706e8bb8ab8fcd0e7976f05443c4",
+    "adapter_checkpoint_sha256": "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526",
+    "val_parsed_sha256": "506347e8b0095dafc98f25a188fca876591b2abd4e6d448176c7db0e8cb8e830",
+    "test_parsed_sha256": "cccd6023e0dce846a8b9376445fd977fe2caa5868f841821a816a6cb4e37b17e"
+  }
+}

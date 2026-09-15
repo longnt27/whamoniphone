@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "frames": [
+    "frame_01.jpg",
+    "frame_02.jpg",
+    "frame_03.jpg",
+    "frame_04.jpg",
+    "frame_05.jpg",
+    "frame_06.jpg",
+    "frame_07.jpg",
+    "frame_08.jpg"
+  ],
+  "feature": {
+    "cosine_similarity_mean": -0.005238399840891361,
+    "cosine_similarity_min": -0.017041347920894623,
+    "rmse": 1.9341961145401,
+    "mean_absolute_error": 1.5229624509811401,
+    "teacher_l2_mean": 31.416576385498047,
+    "student_l2_mean": 53.15277862548828
+  },
+  "initial_pose_student_vs_teacher": {
+    "joint_rotation_error_deg": 111.56185913085938,
+    "body_rotation_error_deg": 109.56114196777344,
+    "root_rotation_error_deg": 157.57858276367188
+  },
+  "latency": {
+    "hmr2_teacher_mean_ms": 228.397432375,
+    "fastvit_coreml_mean_ms": 2.9861355
+  },
+  "note": "Mini-set distillation diagnostic without pose ground truth; teacher output is a reference, not ground truth."
+}

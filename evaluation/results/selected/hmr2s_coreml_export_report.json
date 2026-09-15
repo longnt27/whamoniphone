@@ -1,0 +1,19 @@
+{
+  "checkpoint_sha256": "823728e846c901c75edb12d469fa240e07606a24cfd44c208244a94bb26fc423",
+  "coreml_relative_max_errors": {
+    "betas": 0.01772678059783467,
+    "camera": 0.006312499876736501,
+    "image_token": 0.004507554034633831,
+    "init_kp3d": 0.0015344367601730256,
+    "pose_6d": 0.003905049901734445
+  },
+  "operation": "conversion_only_no_training",
+  "packages": {
+    "first_frame_smpl_initializer": "/Users/tlng/projects/whamoniphone/WhamApp/WhamApp/HMR2SSMPLInit.mlpackage",
+    "frontend": "/Users/tlng/projects/whamoniphone/WhamApp/WhamApp/HMR2SFrontend.mlpackage"
+  },
+  "parameter_count": 23969309,
+  "schema_version": 1,
+  "source_commit": "d69218f411e003621f29df1940b23b076067fad1",
+  "source_repository": "https://github.com/nttcom/TruncHierVFM.git"
+}

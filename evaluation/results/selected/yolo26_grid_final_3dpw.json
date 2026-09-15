@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "experiment": "locked_hmr2s_adapter_vs_native_wham_tuning",
+  "protocol": {
+    "dataset": "3DPW test",
+    "population": "all matching single-person tracks with a valid YOLO26 initializer detection",
+    "test_used_for_training_or_selection": false,
+    "same_population": true,
+    "camera_signal": "zero angular velocity because 3DPW has no phone gyroscope stream",
+    "released_wham": "official stored ViTPose/HMR2a inputs, flip average, released WHAM",
+    "phone_frontend": "yolo26m-pose + released HMR2.0-S pose/shape initialization and image token"
+  },
+  "population": {
+    "eligible_tracks": 11,
+    "completed_tracks": 11,
+    "recurrent_frames_per_variant": 11349,
+    "source_frames": 11360,
+    "detections": 11306,
+    "detection_rate": 0.9952464788732395,
+    "skipped": []
+  },
+  "variants": {
+    "released_wham": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 32.66937125786904,
+          "p50": 28.466880798339844,
+          "p95": 59.22703857421876,
+          "max": 154.8671417236328
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 55.575809034736935,
+          "p50": 51.22310256958008,
+          "p95": 91.1115005493164,
+          "max": 336.0549011230469
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 65.63646479835279,
+          "p50": 60.212493896484375,
+          "p95": 107.67174530029298,
+          "max": 341.62725830078125
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 6.226210768185375,
+          "p50": 4.801873683929443,
+          "p95": 13.03150825500488,
+          "max": 275.9828796386719
+        }
+      },
+      "work_seconds": {
+        "wham_core_and_flip": 44.07632648800063,
+        "smpl_metric_decode": 2.6327945699977136
+      }
+    },
+    "naive_hmr2s_released_wham": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 89.53891621346894,
+          "p50": 82.02127075195312,
+          "p95": 143.84604797363284,
+          "max": 296.45050048828125
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 181.41961923159423,
+          "p50": 165.78466796875,
+          "p95": 336.609344482422,
+          "max": 582.8441162109375
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 210.34114806050613,
+          "p50": 187.6446990966797,
+          "p95": 376.19072265625005,
+          "max": 647.7239379882812
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 10.709841067181493,
+          "p50": 5.790628433227539,
+          "p95": 29.904541778564443,
+          "max": 597.7990112304688
+        }
+      },
+      "work_seconds": {
+        "smpl_metric_decode": 1.6401981550025084
+      },
+      "minus_released": {
+        "pa_mpjpe_mm": 56.8695449555999,
+        "mpjpe_mm": 125.84381019685729,
+        "pve_mm": 144.70468326215334,
+        "accel_official_30fps": 4.483630298996118
+      },
+      "relative_change_vs_released": {
+        "pa_mpjpe_mm": 1.7407603135888876,
+        "mpjpe_mm": 2.2643630813939257,
+        "pve_mm": 2.2046385908612316,
+        "accel_official_30fps": 0.7201218310672237
+      }
+    },
+    "adapter_hmr2s_released_wham": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 51.76733599550263,
+          "p50": 44.3159294128418,
+          "p95": 108.98889465332033,
+          "max": 225.0052947998047
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 91.90692351809555,
+          "p50": 72.89954376220703,
+          "p95": 256.05619506835944,
+          "max": 516.1466064453125
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 107.03011996223597,
+          "p50": 86.0531005859375,
+          "p95": 289.38699340820324,
+          "max": 608.8388061523438
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 12.529941673468088,
+          "p50": 6.319112300872803,
+          "p95": 41.92807006835935,
+          "max": 507.0869445800781
+        }
+      },
+      "work_seconds": {
+        "smpl_metric_decode": 1.4880314660022123
+      },
+      "minus_released": {
+        "pa_mpjpe_mm": 19.09796473763359,
+        "mpjpe_mm": 36.33111448335862,
+        "pve_mm": 41.39365516388318,
+        "accel_official_30fps": 6.303730905282713
+      },
+      "relative_change_vs_released": {
+        "pa_mpjpe_mm": 0.5845831738507512,
+        "mpjpe_mm": 0.6537217381873888,
+        "pve_mm": 0.6306502839702299,
+        "accel_official_30fps": 1.0124506124163752
+      }
+    },
+    "native_hmr2s_tuned_wham": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 62.03055041346196,
+          "p50": 57.046077728271484,
+          "p95": 112.34895629882813,
+          "max": 201.86485290527344
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 110.10249151810852,
+          "p50": 92.39330291748047,
+          "p95": 268.44237670898445,
+          "max": 507.1783142089844
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 132.28305890564562,
+          "p50": 112.9631576538086,
+          "p95": 308.309814453125,
+          "max": 602.3218994140625
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 13.53825271995075,
+          "p50": 6.8960371017456055,
+          "p95": 44.53071670532223,
+          "max": 568.8569946289062
+        }
+      },
+      "work_seconds": {
+        "smpl_metric_decode": 1.413940142998399
+      },
+      "minus_released": {
+        "pa_mpjpe_mm": 29.36117915559292,
+        "mpjpe_mm": 54.52668248337159,
+        "pve_mm": 66.64659410729283,
+        "accel_official_30fps": 7.312041951765375
+      },
+      "relative_change_vs_released": {
+        "pa_mpjpe_mm": 0.8987371971084606,
+        "mpjpe_mm": 0.9811226040684426,
+        "pve_mm": 1.0153897579957016,
+        "accel_official_30fps": 1.174396791886386
+      }
+    }
+  },
+  "grid_selection": {
+    "selection_split": "3DPW validation",
+    "test_opened_after_lock": true,
+    "locked_winner": {
+      "yolo_key": "m",
+      "yolo_variant": "yolo26m-pose",
+      "candidate": "adapter_hmr2s_released_wham",
+      "within_yolo_score_vs_naive": 0.5328854791174149,
+      "pa_mpjpe_mm": 45.890263680812936,
+      "mpjpe_mm": 67.90823732224186,
+      "pve_mm": 81.29496601006676,
+      "accel_official_30fps": 11.520411493736473,
+      "selected_epoch": 5,
+      "selected_stage": "token_adapter"
+    },
+    "reported_deployment_variant": "adapter_hmr2s_released_wham",
+    "grid_validation_report_sha256": "6f9857f9697669c07be114fc87a45e6b4320793ce72c55477ec7167836fe3510",
+    "adapter_checkpoint_sha256": "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526",
+    "tuned_wham_checkpoint_sha256": "4704f8beac262d4dc8aa0fc9f401aeab65d8569cc9cae96d76fbc9cc80ffee4b",
+    "yolo_checkpoint_sha256": "2fbf16367022256a226035695c5c389384c6706e8bb8ab8fcd0e7976f05443c4"
+  }
+}

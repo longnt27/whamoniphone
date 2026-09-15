@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "created_on": "2026-09-10",
+  "host": "Apple M4; macOS Core ML",
+  "precision": "FP16",
+  "sample_set": "8 frames sampled from the official WHAM IMG_9730 example",
+  "method": "Two order-reversed warm runs; detector inference and full image-connected WHAM pipeline",
+  "results": {
+    "yolov8n-pose": {
+      "parameters_millions": 3.3,
+      "package_bytes": 6808108,
+      "detections": 160,
+      "possible_detections": 160,
+      "detector_mean_ms": 3.168,
+      "amortized_pipeline_mean_ms": 7.546,
+      "amortized_pipeline_p95_ms": 8.243
+    },
+    "yolo26n-pose": {
+      "parameters_millions": 2.9,
+      "package_bytes": 6160852,
+      "detections": 160,
+      "possible_detections": 160,
+      "detector_mean_ms": 3.204,
+      "amortized_pipeline_mean_ms": 7.38,
+      "amortized_pipeline_p95_ms": 7.866
+    }
+  },
+  "interpretation": "YOLO26 is 9.5% smaller and the two Mac latency results are effectively tied. A physical-iPhone Release A/B decides deployment. These frames have no keypoint ground truth, so detection success is a workload check, not an accuracy result."
+}

@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "dataset": "/tmp/wham-eval-data/3dpw_test_vit.pth",
+  "dataset_sequences": [
+    "downtown_runForBus_01_0",
+    "downtown_runForBus_01_1",
+    "downtown_walkBridge_01_0",
+    "flat_guitar_01_0",
+    "downtown_walkUphill_00_0",
+    "downtown_upstairs_00_0",
+    "office_phoneCall_00_0",
+    "office_phoneCall_00_1",
+    "downtown_rampAndStairs_00_0",
+    "downtown_rampAndStairs_00_1"
+  ],
+  "frames_per_sequence_cap": 300,
+  "metric_note": "Rotation errors are an asset-free diagnostic, not the paper's SMPL MPJPE/PVE metrics.",
+  "host": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm",
+    "compute_unit": "all"
+  },
+  "model_load_latency_ms": {
+    "WHAM_I": 111.85175,
+    "WHAM_S_keypoints_only": 327.535583,
+    "WHAM_ImageStep": 505.445042,
+    "FastViTInitialPose": 52.596083
+  },
+  "results": {
+    "former_app_zero_init_keypoints_only": {
+      "frames": 3000,
+      "pose_rotation_error_deg": 12.589803695678711,
+      "body_rotation_error_deg": 12.581101417541504,
+      "root_rotation_error_deg": 12.789949417114258,
+      "latency_mean_ms": 1.5069590406666666,
+      "latency_p50_ms": 1.491917,
+      "latency_p95_ms": 1.5478402,
+      "throughput_fps_from_mean": 663.5880425506509,
+      "nonfinite_values": 0
+    },
+    "keypoints_only_with_official_init": {
+      "frames": 3000,
+      "pose_rotation_error_deg": 12.561203002929688,
+      "body_rotation_error_deg": 12.72516918182373,
+      "root_rotation_error_deg": 8.789949417114258,
+      "latency_mean_ms": 1.5361262133333333,
+      "latency_p50_ms": 1.496354,
+      "latency_p95_ms": 1.7579714499999992,
+      "throughput_fps_from_mean": 650.9881748779219,
+      "nonfinite_values": 0
+    },
+    "image_step_feature_ablation": {
+      "frames": 3000,
+      "pose_rotation_error_deg": 12.566749572753906,
+      "body_rotation_error_deg": 12.729193687438965,
+      "root_rotation_error_deg": 8.830513954162598,
+      "latency_mean_ms": 1.7127480830000001,
+      "latency_p50_ms": 1.6710414999999998,
+      "latency_p95_ms": 1.9344228999999997,
+      "throughput_fps_from_mean": 583.8570248161825,
+      "nonfinite_values": 0
+    },
+    "image_step_official_features": {
+      "frames": 3000,
+      "pose_rotation_error_deg": 12.025443077087402,
+      "body_rotation_error_deg": 12.24874210357666,
+      "root_rotation_error_deg": 6.8895416259765625,
+      "latency_mean_ms": 1.6652251146666668,
+      "latency_p50_ms": 1.646125,
+      "latency_p95_ms": 1.7597542,
+      "throughput_fps_from_mean": 600.5194079721606,
+      "nonfinite_values": 0
+    },
+    "image_step_mobile_neutral_init": {
+      "frames": 3000,
+      "pose_rotation_error_deg": 11.819035530090332,
+      "body_rotation_error_deg": 11.861870765686035,
+      "root_rotation_error_deg": 10.833827018737793,
+      "latency_mean_ms": 1.663071266,
+      "latency_p50_ms": 1.6468544999999999,
+      "latency_p95_ms": 1.7375166499999999,
+      "throughput_fps_from_mean": 601.29714248818,
+      "nonfinite_values": 0
+    },
+    "image_step_zero_3d_with_official_hmr2_pose": {
+      "frames": 3000,
+      "pose_rotation_error_deg": 11.480752944946289,
+      "body_rotation_error_deg": 11.565423965454102,
+      "root_rotation_error_deg": 9.533355712890625,
+      "latency_mean_ms": 1.6667640266666668,
+      "latency_p50_ms": 1.6511040000000001,
+      "latency_p95_ms": 1.7423183999999994,
+      "throughput_fps_from_mean": 599.9649524473377,
+      "nonfinite_values": 0
+    },
+    "image_connection_check": {
+      "pose_output_mean_abs_delta": 0.02938585728406906,
+      "pose_output_max_abs_delta": 0.8978271484375,
+      "passed": true
+    },
+    "pose_initializer_on_official_hmr2_features": {
+      "sequences": 10,
+      "pose_rotation_error_deg": 0.07235964387655258,
+      "body_rotation_error_deg": 0.0734051764011383,
+      "root_rotation_error_deg": 0.048312246799468994,
+      "note": "Validates the exported HMR2 readout using official HMR2 features; it does not measure the distilled FastViT feature error."
+    }
+  }
+}

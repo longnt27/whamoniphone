@@ -1,0 +1,9 @@
+{
+  "training_performed": false,
+  "report": "frozen_hmr2s_wham_accuracy_3dpw.json",
+  "per_sequence": "frozen_hmr2s_wham_accuracy_3dpw.csv",
+  "send_back": [
+    "frozen_hmr2s_wham_accuracy_3dpw.json",
+    "frozen_hmr2s_wham_accuracy_3dpw.csv"
+  ]
+}

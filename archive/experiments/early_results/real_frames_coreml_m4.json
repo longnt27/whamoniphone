@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "host": "macOS-26.6.2-arm64-arm-64bit",
+  "sample_set": "8 frames sampled from official WHAM IMG_9730 example",
+  "frames": 8,
+  "passes": 3,
+  "person_detections": 24,
+  "possible_detections": 24,
+  "initializer_mode": "WHAM_I with real first-frame 2D/crop input and neutral 3D/SMPL fallback; the available FastViT distillation failed HMR2 feature-space validation",
+  "feature_connection_pose_max_delta": 0.275634765625,
+  "feature_connection_passed": true,
+  "timings": {
+    "load_yolo": {
+      "samples": 1,
+      "mean_ms": 526.330958,
+      "p50_ms": 526.330958,
+      "p95_ms": 526.330958
+    },
+    "load_fastvit": {
+      "samples": 1,
+      "mean_ms": 1244.506458,
+      "p50_ms": 1244.506458,
+      "p95_ms": 1244.506458
+    },
+    "load_wham_init": {
+      "samples": 1,
+      "mean_ms": 98.202292,
+      "p50_ms": 98.202292,
+      "p95_ms": 98.202292
+    },
+    "load_wham_image_step": {
+      "samples": 1,
+      "mean_ms": 379.195,
+      "p50_ms": 379.195,
+      "p95_ms": 379.195
+    },
+    "yolo_pose_and_parse": {
+      "samples": 24,
+      "mean_ms": 2.727185875,
+      "p50_ms": 2.7008755,
+      "p95_ms": 2.9471294999999995
+    },
+    "crop_and_keypoint_normalization": {
+      "samples": 24,
+      "mean_ms": 0.3262464166666667,
+      "p50_ms": 0.3125,
+      "p95_ms": 0.39336604999999997
+    },
+    "fastvit_normalized": {
+      "samples": 24,
+      "mean_ms": 1.9748176666666666,
+      "p50_ms": 1.9582709999999999,
+      "p95_ms": 2.09502045
+    },
+    "wham_init": {
+      "samples": 3,
+      "mean_ms": 0.5138613333333334,
+      "p50_ms": 0.503834,
+      "p95_ms": 0.5467334
+    },
+    "wham_image_step": {
+      "samples": 21,
+      "mean_ms": 1.7801725714285712,
+      "p50_ms": 1.767042,
+      "p95_ms": 1.948417
+    },
+    "full_8_frame_clip": {
+      "samples": 3,
+      "mean_ms": 53.302986,
+      "p50_ms": 53.326,
+      "p95_ms": 54.2498122
+    },
+    "amortized_source_frame": {
+      "samples": 3,
+      "mean_ms": 6.66287325,
+      "p50_ms": 6.66575,
+      "p95_ms": 6.781226525
+    }
+  },
+  "timing_note": "Host Core ML baseline only; run the Benchmark tab in Release on iPhone for device figures."
+}

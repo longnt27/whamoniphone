@@ -1,0 +1,1145 @@
+{
+  "schema_version": 1,
+  "scope": {
+    "dataset": "registered 3DPW test + official WHAM parsed ViT labels",
+    "official_and_controlled_person_tracks": 37,
+    "official_and_controlled_recurrent_frames": 34524,
+    "iphone_single_person_tracks": 11,
+    "iphone_recurrent_frames": 11349,
+    "iphone_source_frames_including_initializer": 11360,
+    "population_note": "Official WHAM and the controlled FastViT substitution use every selected person track. The app-like row and its explicit WHAM reference use all selected single-person videos because the current iPhone app selects one highest-confidence person and has no identity association for multi-person videos.",
+    "official_reference": "released WHAM real+BEDLAM architecture/checkpoint, official stored ViTPose/HMR2 inputs, HMR2 initialization, ground-truth first root, and flip averaging",
+    "iphone_subset": "YOLOv8n-pose, phase-three FastViT, zero first-frame 3D joints, neutral SMPL pose, identity root, zero camera angular velocity",
+    "smpl_evaluation_decode": "Licensed SMPL is applied offline to every row only to calculate the paper metrics. It is not part of the current iPhone pipeline or latency.",
+    "world_grounded": false,
+    "world_grounded_note": "WHAM's 3DPW evaluator sets camera angular velocity to zero. Use EMDB split 2 for a future world-grounded trajectory comparison.",
+    "timing_note": "work_seconds is batched Kaggle diagnostic throughput. Official HMR2 and ViTPose inputs are cached, so it is not an end-to-end latency comparison."
+  },
+  "paper_reference_for_this_bedlam_checkpoint": {
+    "source": "WHAM CVPR 2024 Table 2, real datasets plus BEDLAM",
+    "pa_mpjpe_mm": 35.7,
+    "mpjpe_mm": 56.9,
+    "pve_mm": 67.4,
+    "accel_m_per_s2": 6.7
+  },
+  "baseline_reproduction": {
+    "passed": false,
+    "tolerance": {
+      "position_metrics_mm": 1.0,
+      "accel_m_per_s2": 0.3
+    },
+    "measured_minus_paper": {
+      "pa_mpjpe_mm": -0.0023633144777761572,
+      "mpjpe_mm": 0.714373087482457,
+      "pve_mm": 1.2378705238304235,
+      "accel_m_per_s2": -0.18832646444915024
+    }
+  },
+  "provenance": {
+    "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+    "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+    "student_checkpoint_sha256": "f15875f3fed12538312f59956b6c93e9cca2ab41a9e8d87edf593dd85f311ab1",
+    "student_training": {
+      "architecture": "fastvit_sa24_spatial_hmr2_v2",
+      "epoch": 36,
+      "stage": "downstream_last_stage",
+      "accepted": false,
+      "acceptance_state": "rejected_on_validation",
+      "validation": {
+        "raw_cosine_mean": 0.8956096768379211,
+        "raw_cosine_p05": 0.7605651617050171,
+        "centered_cosine_mean": 0.6976122260093689,
+        "centered_cosine_p05": 0.3771888315677643,
+        "raw_rmse": 0.446309894323349,
+        "normalized_rmse": 0.7290211319923401,
+        "pose_rotation_error_deg": 11.646503448486328,
+        "root_rotation_error_deg": 38.565250396728516,
+        "body_rotation_error_deg": 10.476120948791504
+      },
+      "phase3_validation": {
+        "accepted_on_validation": false,
+        "gates": {
+          "absolute_pose_degradation": false,
+          "relative_pose_degradation": true,
+          "student_teacher_pose_drift": true
+        },
+        "tracks": 16,
+        "frames": 4773,
+        "feature_cosine_mean": 0.9179333448410034,
+        "feature_cosine_p05": 0.8133004903793335,
+        "feature_rmse": 0.4013368487358093,
+        "teacher_pose_error_deg": 11.60999584197998,
+        "student_pose_error_deg": 12.739771842956543,
+        "pose_degradation_deg": 1.1297760009765625,
+        "relative_pose_degradation": 0.09731062925031068,
+        "student_teacher_pose_drift_deg": 4.96968412399292,
+        "student_teacher_pose_drift_p95_deg": 14.674439430236816,
+        "per_track": [
+          {
+            "sequence": "courtyard_hug_00_0",
+            "frames": 300,
+            "feature_cosine": 0.9349901080131531,
+            "teacher_pose_error_deg": 14.072508811950684,
+            "student_pose_error_deg": 13.978949546813965,
+            "pose_degradation_deg": -0.09355926513671875,
+            "pose_drift_deg": 4.898921966552734
+          },
+          {
+            "sequence": "courtyard_hug_00_1",
+            "frames": 300,
+            "feature_cosine": 0.9333654642105103,
+            "teacher_pose_error_deg": 12.382007598876953,
+            "student_pose_error_deg": 12.993307113647461,
+            "pose_degradation_deg": 0.6112995147705078,
+            "pose_drift_deg": 4.927260398864746
+          },
+          {
+            "sequence": "outdoors_freestyle_01_0",
+            "frames": 273,
+            "feature_cosine": 0.9359774589538574,
+            "teacher_pose_error_deg": 9.154709815979004,
+            "student_pose_error_deg": 10.249494552612305,
+            "pose_degradation_deg": 1.0947847366333008,
+            "pose_drift_deg": 4.522884368896484
+          },
+          {
+            "sequence": "courtyard_drinking_00_0",
+            "frames": 300,
+            "feature_cosine": 0.9470803737640381,
+            "teacher_pose_error_deg": 9.43014144897461,
+            "student_pose_error_deg": 9.94913101196289,
+            "pose_degradation_deg": 0.5189895629882812,
+            "pose_drift_deg": 3.482400894165039
+          },
+          {
+            "sequence": "courtyard_drinking_00_1",
+            "frames": 300,
+            "feature_cosine": 0.9252378344535828,
+            "teacher_pose_error_deg": 9.092330932617188,
+            "student_pose_error_deg": 9.500350952148438,
+            "pose_degradation_deg": 0.40802001953125,
+            "pose_drift_deg": 4.597958564758301
+          },
+          {
+            "sequence": "outdoors_parcours_00_0",
+            "frames": 300,
+            "feature_cosine": 0.9123244285583496,
+            "teacher_pose_error_deg": 10.810462951660156,
+            "student_pose_error_deg": 11.81833553314209,
+            "pose_degradation_deg": 1.0078725814819336,
+            "pose_drift_deg": 5.5543532371521
+          },
+          {
+            "sequence": "courtyard_rangeOfMotions_01_0",
+            "frames": 300,
+            "feature_cosine": 0.9259931445121765,
+            "teacher_pose_error_deg": 8.603919982910156,
+            "student_pose_error_deg": 10.231855392456055,
+            "pose_degradation_deg": 1.6279354095458984,
+            "pose_drift_deg": 4.309886455535889
+          },
+          {
+            "sequence": "courtyard_rangeOfMotions_01_1",
+            "frames": 300,
+            "feature_cosine": 0.9301581978797913,
+            "teacher_pose_error_deg": 11.5042085647583,
+            "student_pose_error_deg": 13.232070922851562,
+            "pose_degradation_deg": 1.7278623580932617,
+            "pose_drift_deg": 5.409422874450684
+          },
+          {
+            "sequence": "outdoors_parcours_01_0",
+            "frames": 300,
+            "feature_cosine": 0.8809486031532288,
+            "teacher_pose_error_deg": 16.671009063720703,
+            "student_pose_error_deg": 17.735692977905273,
+            "pose_degradation_deg": 1.0646839141845703,
+            "pose_drift_deg": 6.509483814239502
+          },
+          {
+            "sequence": "outdoors_crosscountry_00_0",
+            "frames": 300,
+            "feature_cosine": 0.8664864897727966,
+            "teacher_pose_error_deg": 17.90496063232422,
+            "student_pose_error_deg": 24.117355346679688,
+            "pose_degradation_deg": 6.212394714355469,
+            "pose_drift_deg": 10.785438537597656
+          },
+          {
+            "sequence": "courtyard_dancing_00_0",
+            "frames": 300,
+            "feature_cosine": 0.8739436864852905,
+            "teacher_pose_error_deg": 10.604065895080566,
+            "student_pose_error_deg": 10.70616340637207,
+            "pose_degradation_deg": 0.1020975112915039,
+            "pose_drift_deg": 4.255864143371582
+          },
+          {
+            "sequence": "courtyard_dancing_00_1",
+            "frames": 300,
+            "feature_cosine": 0.9167421460151672,
+            "teacher_pose_error_deg": 12.79466724395752,
+            "student_pose_error_deg": 13.360330581665039,
+            "pose_degradation_deg": 0.5656633377075195,
+            "pose_drift_deg": 4.423600196838379
+          },
+          {
+            "sequence": "courtyard_basketball_01_0",
+            "frames": 300,
+            "feature_cosine": 0.9350752830505371,
+            "teacher_pose_error_deg": 11.566028594970703,
+            "student_pose_error_deg": 12.320037841796875,
+            "pose_degradation_deg": 0.7540092468261719,
+            "pose_drift_deg": 4.857438564300537
+          },
+          {
+            "sequence": "outdoors_golf_00_0",
+            "frames": 300,
+            "feature_cosine": 0.9292264580726624,
+            "teacher_pose_error_deg": 10.920806884765625,
+            "student_pose_error_deg": 11.530219078063965,
+            "pose_degradation_deg": 0.6094121932983398,
+            "pose_drift_deg": 3.9896371364593506
+          },
+          {
+            "sequence": "courtyard_jumpBench_01_0",
+            "frames": 300,
+            "feature_cosine": 0.9378916621208191,
+            "teacher_pose_error_deg": 10.845646858215332,
+            "student_pose_error_deg": 11.744425773620605,
+            "pose_degradation_deg": 0.8987789154052734,
+            "pose_drift_deg": 3.549907684326172
+          },
+          {
+            "sequence": "downtown_walkDownhill_00_0",
+            "frames": 300,
+            "feature_cosine": 0.9031159281730652,
+            "teacher_pose_error_deg": 9.181499481201172,
+            "student_pose_error_deg": 10.144497871398926,
+            "pose_degradation_deg": 0.9629983901977539,
+            "pose_drift_deg": 3.400268077850342
+          }
+        ]
+      },
+      "phase3_metadata": {
+        "schema_version": 1,
+        "method": "frozen_wham_supervised_pose_and_feature_distillation",
+        "source_checkpoint_sha256": "5dad1074c15be1efa1b265671dcc9fdf595cc31540b0edfbf93c44cdccfa6810",
+        "source_training": {
+          "architecture": "fastvit_sa24_spatial_hmr2_v2",
+          "epoch": 30,
+          "stage": "downstream_last_stage",
+          "accepted": false,
+          "acceptance_state": "rejected_on_validation",
+          "validation": {
+            "raw_cosine_mean": 0.8956096768379211,
+            "raw_cosine_p05": 0.7605651617050171,
+            "centered_cosine_mean": 0.6976122260093689,
+            "centered_cosine_p05": 0.3771888315677643,
+            "raw_rmse": 0.446309894323349,
+            "normalized_rmse": 0.7290211319923401,
+            "pose_rotation_error_deg": 11.646503448486328,
+            "root_rotation_error_deg": 38.565250396728516,
+            "body_rotation_error_deg": 10.476120948791504
+          },
+          "phase3_validation": {
+            "accepted_on_validation": false,
+            "gates": {
+              "absolute_pose_degradation": false,
+              "relative_pose_degradation": true,
+              "student_teacher_pose_drift": true
+            },
+            "tracks": 16,
+            "frames": 4773,
+            "feature_cosine_mean": 0.9177883863449097,
+            "feature_cosine_p05": 0.8133370876312256,
+            "feature_rmse": 0.40162530541419983,
+            "teacher_pose_error_deg": 11.60999584197998,
+            "student_pose_error_deg": 12.748685836791992,
+            "pose_degradation_deg": 1.1386899948120117,
+            "relative_pose_degradation": 0.09807841538535972,
+            "student_teacher_pose_drift_deg": 4.990893840789795,
+            "student_teacher_pose_drift_p95_deg": 14.67727279663086,
+            "per_track": [
+              {
+                "sequence": "courtyard_hug_00_0",
+                "frames": 300,
+                "feature_cosine": 0.9350577592849731,
+                "teacher_pose_error_deg": 14.072508811950684,
+                "student_pose_error_deg": 14.012776374816895,
+                "pose_degradation_deg": -0.05973243713378906,
+                "pose_drift_deg": 5.0017313957214355
+              },
+              {
+                "sequence": "courtyard_hug_00_1",
+                "frames": 300,
+                "feature_cosine": 0.9330191016197205,
+                "teacher_pose_error_deg": 12.382007598876953,
+                "student_pose_error_deg": 12.976896286010742,
+                "pose_degradation_deg": 0.5948886871337891,
+                "pose_drift_deg": 4.912457466125488
+              },
+              {
+                "sequence": "outdoors_freestyle_01_0",
+                "frames": 273,
+                "feature_cosine": 0.9360244274139404,
+                "teacher_pose_error_deg": 9.154709815979004,
+                "student_pose_error_deg": 10.25391960144043,
+                "pose_degradation_deg": 1.0992097854614258,
+                "pose_drift_deg": 4.560774803161621
+              },
+              {
+                "sequence": "courtyard_drinking_00_0",
+                "frames": 300,
+                "feature_cosine": 0.9467121362686157,
+                "teacher_pose_error_deg": 9.43014144897461,
+                "student_pose_error_deg": 9.953882217407227,
+                "pose_degradation_deg": 0.5237407684326172,
+                "pose_drift_deg": 3.525207757949829
+              },
+              {
+                "sequence": "courtyard_drinking_00_1",
+                "frames": 300,
+                "feature_cosine": 0.9250982403755188,
+                "teacher_pose_error_deg": 9.092330932617188,
+                "student_pose_error_deg": 9.550841331481934,
+                "pose_degradation_deg": 0.4585103988647461,
+                "pose_drift_deg": 4.702123641967773
+              },
+              {
+                "sequence": "outdoors_parcours_00_0",
+                "frames": 300,
+                "feature_cosine": 0.9124538898468018,
+                "teacher_pose_error_deg": 10.810462951660156,
+                "student_pose_error_deg": 11.834619522094727,
+                "pose_degradation_deg": 1.0241565704345703,
+                "pose_drift_deg": 5.593201637268066
+              },
+              {
+                "sequence": "courtyard_rangeOfMotions_01_0",
+                "frames": 300,
+                "feature_cosine": 0.9243139624595642,
+                "teacher_pose_error_deg": 8.603919982910156,
+                "student_pose_error_deg": 10.241703987121582,
+                "pose_degradation_deg": 1.6377840042114258,
+                "pose_drift_deg": 4.292659759521484
+              },
+              {
+                "sequence": "courtyard_rangeOfMotions_01_1",
+                "frames": 300,
+                "feature_cosine": 0.9288991093635559,
+                "teacher_pose_error_deg": 11.5042085647583,
+                "student_pose_error_deg": 13.207978248596191,
+                "pose_degradation_deg": 1.7037696838378906,
+                "pose_drift_deg": 5.391098976135254
+              },
+              {
+                "sequence": "outdoors_parcours_01_0",
+                "frames": 300,
+                "feature_cosine": 0.8813663721084595,
+                "teacher_pose_error_deg": 16.671009063720703,
+                "student_pose_error_deg": 17.77069091796875,
+                "pose_degradation_deg": 1.0996818542480469,
+                "pose_drift_deg": 6.552314758300781
+              },
+              {
+                "sequence": "outdoors_crosscountry_00_0",
+                "frames": 300,
+                "feature_cosine": 0.8665218353271484,
+                "teacher_pose_error_deg": 17.90496063232422,
+                "student_pose_error_deg": 24.044301986694336,
+                "pose_degradation_deg": 6.139341354370117,
+                "pose_drift_deg": 10.714033126831055
+              },
+              {
+                "sequence": "courtyard_dancing_00_0",
+                "frames": 300,
+                "feature_cosine": 0.8730598092079163,
+                "teacher_pose_error_deg": 10.604065895080566,
+                "student_pose_error_deg": 10.732261657714844,
+                "pose_degradation_deg": 0.12819576263427734,
+                "pose_drift_deg": 4.280041217803955
+              },
+              {
+                "sequence": "courtyard_dancing_00_1",
+                "frames": 300,
+                "feature_cosine": 0.9169243574142456,
+                "teacher_pose_error_deg": 12.79466724395752,
+                "student_pose_error_deg": 13.34366512298584,
+                "pose_degradation_deg": 0.5489978790283203,
+                "pose_drift_deg": 4.389793872833252
+              },
+              {
+                "sequence": "courtyard_basketball_01_0",
+                "frames": 300,
+                "feature_cosine": 0.9346942901611328,
+                "teacher_pose_error_deg": 11.566028594970703,
+                "student_pose_error_deg": 12.370849609375,
+                "pose_degradation_deg": 0.8048210144042969,
+                "pose_drift_deg": 4.900025844573975
+              },
+              {
+                "sequence": "outdoors_golf_00_0",
+                "frames": 300,
+                "feature_cosine": 0.9301519989967346,
+                "teacher_pose_error_deg": 10.920806884765625,
+                "student_pose_error_deg": 11.542664527893066,
+                "pose_degradation_deg": 0.6218576431274414,
+                "pose_drift_deg": 4.035654067993164
+              },
+              {
+                "sequence": "courtyard_jumpBench_01_0",
+                "frames": 300,
+                "feature_cosine": 0.9378566741943359,
+                "teacher_pose_error_deg": 10.845646858215332,
+                "student_pose_error_deg": 11.75672721862793,
+                "pose_degradation_deg": 0.9110803604125977,
+                "pose_drift_deg": 3.570469856262207
+              },
+              {
+                "sequence": "downtown_walkDownhill_00_0",
+                "frames": 300,
+                "feature_cosine": 0.9041023850440979,
+                "teacher_pose_error_deg": 9.181499481201172,
+                "student_pose_error_deg": 10.160653114318848,
+                "pose_degradation_deg": 0.9791536331176758,
+                "pose_drift_deg": 3.393996477127075
+              }
+            ]
+          },
+          "phase3_metadata": {
+            "schema_version": 1,
+            "method": "frozen_wham_supervised_pose_and_feature_distillation",
+            "source_checkpoint_sha256": "9ac5dd98044750c5a941a0d2f0ba76c712a8a3c9d93860043b7c36085cf5c618",
+            "source_training": {
+              "architecture": "fastvit_sa24_spatial_hmr2_v2",
+              "epoch": 24,
+              "stage": "downstream_last_stage",
+              "accepted": false,
+              "acceptance_state": "rejected_on_validation",
+              "validation": {
+                "raw_cosine_mean": 0.8956096768379211,
+                "raw_cosine_p05": 0.7605651617050171,
+                "centered_cosine_mean": 0.6976122260093689,
+                "centered_cosine_p05": 0.3771888315677643,
+                "raw_rmse": 0.446309894323349,
+                "normalized_rmse": 0.7290211319923401,
+                "pose_rotation_error_deg": 11.646503448486328,
+                "root_rotation_error_deg": 38.565250396728516,
+                "body_rotation_error_deg": 10.476120948791504
+              },
+              "phase3_validation": {
+                "accepted_on_validation": false,
+                "gates": {
+                  "absolute_pose_degradation": false,
+                  "relative_pose_degradation": false,
+                  "student_teacher_pose_drift": false
+                },
+                "tracks": 16,
+                "frames": 4773,
+                "feature_cosine_mean": 0.9177629947662354,
+                "feature_cosine_p05": 0.8099285364151001,
+                "feature_rmse": 0.40129125118255615,
+                "teacher_pose_error_deg": 11.60999584197998,
+                "student_pose_error_deg": 12.928950309753418,
+                "pose_degradation_deg": 1.3189544677734375,
+                "relative_pose_degradation": 0.11360507667059609,
+                "student_teacher_pose_drift_deg": 5.075819492340088,
+                "student_teacher_pose_drift_p95_deg": 14.594057083129883,
+                "per_track": [
+                  {
+                    "sequence": "courtyard_hug_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9360246062278748,
+                    "teacher_pose_error_deg": 14.072508811950684,
+                    "student_pose_error_deg": 14.290668487548828,
+                    "pose_degradation_deg": 0.21815967559814453,
+                    "pose_drift_deg": 5.158099174499512
+                  },
+                  {
+                    "sequence": "courtyard_hug_00_1",
+                    "frames": 300,
+                    "feature_cosine": 0.9351342916488647,
+                    "teacher_pose_error_deg": 12.382007598876953,
+                    "student_pose_error_deg": 13.22716999053955,
+                    "pose_degradation_deg": 0.8451623916625977,
+                    "pose_drift_deg": 4.71208381652832
+                  },
+                  {
+                    "sequence": "outdoors_freestyle_01_0",
+                    "frames": 273,
+                    "feature_cosine": 0.9364317059516907,
+                    "teacher_pose_error_deg": 9.154709815979004,
+                    "student_pose_error_deg": 10.383676528930664,
+                    "pose_degradation_deg": 1.2289667129516602,
+                    "pose_drift_deg": 4.786095142364502
+                  },
+                  {
+                    "sequence": "courtyard_drinking_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9472963213920593,
+                    "teacher_pose_error_deg": 9.43014144897461,
+                    "student_pose_error_deg": 10.201507568359375,
+                    "pose_degradation_deg": 0.7713661193847656,
+                    "pose_drift_deg": 3.628774404525757
+                  },
+                  {
+                    "sequence": "courtyard_drinking_00_1",
+                    "frames": 300,
+                    "feature_cosine": 0.9249070286750793,
+                    "teacher_pose_error_deg": 9.092330932617188,
+                    "student_pose_error_deg": 9.711230278015137,
+                    "pose_degradation_deg": 0.6188993453979492,
+                    "pose_drift_deg": 4.868814945220947
+                  },
+                  {
+                    "sequence": "outdoors_parcours_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9115592241287231,
+                    "teacher_pose_error_deg": 10.810462951660156,
+                    "student_pose_error_deg": 12.037920951843262,
+                    "pose_degradation_deg": 1.2274580001831055,
+                    "pose_drift_deg": 5.853944301605225
+                  },
+                  {
+                    "sequence": "courtyard_rangeOfMotions_01_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9227211475372314,
+                    "teacher_pose_error_deg": 8.603919982910156,
+                    "student_pose_error_deg": 10.528334617614746,
+                    "pose_degradation_deg": 1.9244146347045898,
+                    "pose_drift_deg": 4.442093849182129
+                  },
+                  {
+                    "sequence": "courtyard_rangeOfMotions_01_1",
+                    "frames": 300,
+                    "feature_cosine": 0.927985429763794,
+                    "teacher_pose_error_deg": 11.5042085647583,
+                    "student_pose_error_deg": 13.379793167114258,
+                    "pose_degradation_deg": 1.875584602355957,
+                    "pose_drift_deg": 5.41340446472168
+                  },
+                  {
+                    "sequence": "outdoors_parcours_01_0",
+                    "frames": 300,
+                    "feature_cosine": 0.8800369501113892,
+                    "teacher_pose_error_deg": 16.671009063720703,
+                    "student_pose_error_deg": 17.912843704223633,
+                    "pose_degradation_deg": 1.2418346405029297,
+                    "pose_drift_deg": 6.642423152923584
+                  },
+                  {
+                    "sequence": "outdoors_crosscountry_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.8662412762641907,
+                    "teacher_pose_error_deg": 17.90496063232422,
+                    "student_pose_error_deg": 24.202966690063477,
+                    "pose_degradation_deg": 6.298006057739258,
+                    "pose_drift_deg": 10.946310997009277
+                  },
+                  {
+                    "sequence": "courtyard_dancing_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.8719213604927063,
+                    "teacher_pose_error_deg": 10.604065895080566,
+                    "student_pose_error_deg": 11.076156616210938,
+                    "pose_degradation_deg": 0.4720907211303711,
+                    "pose_drift_deg": 4.371036529541016
+                  },
+                  {
+                    "sequence": "courtyard_dancing_00_1",
+                    "frames": 300,
+                    "feature_cosine": 0.9166733622550964,
+                    "teacher_pose_error_deg": 12.79466724395752,
+                    "student_pose_error_deg": 13.461612701416016,
+                    "pose_degradation_deg": 0.6669454574584961,
+                    "pose_drift_deg": 4.503940105438232
+                  },
+                  {
+                    "sequence": "courtyard_basketball_01_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9348174929618835,
+                    "teacher_pose_error_deg": 11.566028594970703,
+                    "student_pose_error_deg": 12.397160530090332,
+                    "pose_degradation_deg": 0.8311319351196289,
+                    "pose_drift_deg": 4.9024858474731445
+                  },
+                  {
+                    "sequence": "outdoors_golf_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9307482838630676,
+                    "teacher_pose_error_deg": 10.920806884765625,
+                    "student_pose_error_deg": 11.612641334533691,
+                    "pose_degradation_deg": 0.6918344497680664,
+                    "pose_drift_deg": 4.011847019195557
+                  },
+                  {
+                    "sequence": "courtyard_jumpBench_01_0",
+                    "frames": 300,
+                    "feature_cosine": 0.9380196928977966,
+                    "teacher_pose_error_deg": 10.845646858215332,
+                    "student_pose_error_deg": 11.960631370544434,
+                    "pose_degradation_deg": 1.1149845123291016,
+                    "pose_drift_deg": 3.692387342453003
+                  },
+                  {
+                    "sequence": "downtown_walkDownhill_00_0",
+                    "frames": 300,
+                    "feature_cosine": 0.905369758605957,
+                    "teacher_pose_error_deg": 9.181499481201172,
+                    "student_pose_error_deg": 10.249797821044922,
+                    "pose_degradation_deg": 1.06829833984375,
+                    "pose_drift_deg": 3.253295660018921
+                  }
+                ]
+              },
+              "phase3_metadata": {
+                "schema_version": 1,
+                "method": "frozen_wham_temporal_feature_distillation",
+                "source_checkpoint_sha256": "98e428227aa274b56f3e1fd5fac38e0116aeb1cd8111f2e2703b315bd39cf8c8",
+                "source_training": {
+                  "architecture": "fastvit_sa24_spatial_hmr2_v2",
+                  "epoch": 20,
+                  "stage": "downstream_last_stage",
+                  "accepted": false,
+                  "acceptance_state": "awaiting_untouched_3dpw_test",
+                  "validation": {
+                    "raw_cosine_mean": 0.8956096768379211,
+                    "raw_cosine_p05": 0.7605651617050171,
+                    "centered_cosine_mean": 0.6976122260093689,
+                    "centered_cosine_p05": 0.3771888315677643,
+                    "raw_rmse": 0.446309894323349,
+                    "normalized_rmse": 0.7290211319923401,
+                    "pose_rotation_error_deg": 11.646503448486328,
+                    "root_rotation_error_deg": 38.565250396728516,
+                    "body_rotation_error_deg": 10.476120948791504
+                  },
+                  "phase3_validation": {
+                    "accepted_on_validation": false,
+                    "gates": {
+                      "absolute_pose_degradation": false,
+                      "relative_pose_degradation": false,
+                      "student_teacher_pose_drift": false
+                    },
+                    "tracks": 16,
+                    "frames": 4773,
+                    "feature_cosine_mean": 0.918588399887085,
+                    "feature_cosine_p05": 0.8129940032958984,
+                    "feature_rmse": 0.3993101716041565,
+                    "teacher_pose_error_deg": 11.60999584197998,
+                    "student_pose_error_deg": 12.988686561584473,
+                    "pose_degradation_deg": 1.3786907196044922,
+                    "relative_pose_degradation": 0.1187503198424375,
+                    "student_teacher_pose_drift_deg": 5.161410331726074,
+                    "student_teacher_pose_drift_p95_deg": 14.77348804473877,
+                    "per_track": [
+                      {
+                        "sequence": "courtyard_hug_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.936249315738678,
+                        "teacher_pose_error_deg": 14.072508811950684,
+                        "student_pose_error_deg": 14.47758960723877,
+                        "pose_degradation_deg": 0.40508079528808594,
+                        "pose_drift_deg": 5.351521968841553
+                      },
+                      {
+                        "sequence": "courtyard_hug_00_1",
+                        "frames": 300,
+                        "feature_cosine": 0.9345502853393555,
+                        "teacher_pose_error_deg": 12.382007598876953,
+                        "student_pose_error_deg": 13.248909950256348,
+                        "pose_degradation_deg": 0.8669023513793945,
+                        "pose_drift_deg": 4.6079230308532715
+                      },
+                      {
+                        "sequence": "outdoors_freestyle_01_0",
+                        "frames": 273,
+                        "feature_cosine": 0.9383423328399658,
+                        "teacher_pose_error_deg": 9.154709815979004,
+                        "student_pose_error_deg": 10.492386817932129,
+                        "pose_degradation_deg": 1.337677001953125,
+                        "pose_drift_deg": 4.886192798614502
+                      },
+                      {
+                        "sequence": "courtyard_drinking_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.9474209547042847,
+                        "teacher_pose_error_deg": 9.43014144897461,
+                        "student_pose_error_deg": 10.413897514343262,
+                        "pose_degradation_deg": 0.9837560653686523,
+                        "pose_drift_deg": 3.847545862197876
+                      },
+                      {
+                        "sequence": "courtyard_drinking_00_1",
+                        "frames": 300,
+                        "feature_cosine": 0.9243836402893066,
+                        "teacher_pose_error_deg": 9.092330932617188,
+                        "student_pose_error_deg": 9.830634117126465,
+                        "pose_degradation_deg": 0.7383031845092773,
+                        "pose_drift_deg": 5.3036980628967285
+                      },
+                      {
+                        "sequence": "outdoors_parcours_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.9155126810073853,
+                        "teacher_pose_error_deg": 10.810462951660156,
+                        "student_pose_error_deg": 12.08031177520752,
+                        "pose_degradation_deg": 1.2698488235473633,
+                        "pose_drift_deg": 5.960043907165527
+                      },
+                      {
+                        "sequence": "courtyard_rangeOfMotions_01_0",
+                        "frames": 300,
+                        "feature_cosine": 0.9213401079177856,
+                        "teacher_pose_error_deg": 8.603919982910156,
+                        "student_pose_error_deg": 10.574814796447754,
+                        "pose_degradation_deg": 1.9708948135375977,
+                        "pose_drift_deg": 4.472116947174072
+                      },
+                      {
+                        "sequence": "courtyard_rangeOfMotions_01_1",
+                        "frames": 300,
+                        "feature_cosine": 0.9279474020004272,
+                        "teacher_pose_error_deg": 11.5042085647583,
+                        "student_pose_error_deg": 13.415809631347656,
+                        "pose_degradation_deg": 1.9116010665893555,
+                        "pose_drift_deg": 5.5357561111450195
+                      },
+                      {
+                        "sequence": "outdoors_parcours_01_0",
+                        "frames": 300,
+                        "feature_cosine": 0.8835257887840271,
+                        "teacher_pose_error_deg": 16.671009063720703,
+                        "student_pose_error_deg": 17.939306259155273,
+                        "pose_degradation_deg": 1.2682971954345703,
+                        "pose_drift_deg": 6.724931716918945
+                      },
+                      {
+                        "sequence": "outdoors_crosscountry_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.8676431179046631,
+                        "teacher_pose_error_deg": 17.90496063232422,
+                        "student_pose_error_deg": 24.064558029174805,
+                        "pose_degradation_deg": 6.159597396850586,
+                        "pose_drift_deg": 10.783050537109375
+                      },
+                      {
+                        "sequence": "courtyard_dancing_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.8721207976341248,
+                        "teacher_pose_error_deg": 10.604065895080566,
+                        "student_pose_error_deg": 11.280817985534668,
+                        "pose_degradation_deg": 0.6767520904541016,
+                        "pose_drift_deg": 4.515530109405518
+                      },
+                      {
+                        "sequence": "courtyard_dancing_00_1",
+                        "frames": 300,
+                        "feature_cosine": 0.9170637726783752,
+                        "teacher_pose_error_deg": 12.79466724395752,
+                        "student_pose_error_deg": 13.369784355163574,
+                        "pose_degradation_deg": 0.5751171112060547,
+                        "pose_drift_deg": 4.521397590637207
+                      },
+                      {
+                        "sequence": "courtyard_basketball_01_0",
+                        "frames": 300,
+                        "feature_cosine": 0.9355894923210144,
+                        "teacher_pose_error_deg": 11.566028594970703,
+                        "student_pose_error_deg": 12.423757553100586,
+                        "pose_degradation_deg": 0.8577289581298828,
+                        "pose_drift_deg": 4.949008464813232
+                      },
+                      {
+                        "sequence": "outdoors_golf_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.933942973613739,
+                        "teacher_pose_error_deg": 10.920806884765625,
+                        "student_pose_error_deg": 11.706015586853027,
+                        "pose_degradation_deg": 0.7852087020874023,
+                        "pose_drift_deg": 4.0097336769104
+                      },
+                      {
+                        "sequence": "courtyard_jumpBench_01_0",
+                        "frames": 300,
+                        "feature_cosine": 0.9385269284248352,
+                        "teacher_pose_error_deg": 10.845646858215332,
+                        "student_pose_error_deg": 11.962754249572754,
+                        "pose_degradation_deg": 1.1171073913574219,
+                        "pose_drift_deg": 3.7554001808166504
+                      },
+                      {
+                        "sequence": "downtown_walkDownhill_00_0",
+                        "frames": 300,
+                        "feature_cosine": 0.905032753944397,
+                        "teacher_pose_error_deg": 9.181499481201172,
+                        "student_pose_error_deg": 10.312971115112305,
+                        "pose_degradation_deg": 1.1314716339111328,
+                        "pose_drift_deg": 3.333954095840454
+                      }
+                    ]
+                  },
+                  "phase3_metadata": {
+                    "schema_version": 1,
+                    "method": "frozen_wham_temporal_feature_distillation",
+                    "source_checkpoint_sha256": "157f9371cbdbd13a366d1d9fb7ad7162be9e33418bdb9c0bddbf2209999992da",
+                    "source_training": {
+                      "architecture": "fastvit_sa24_spatial_hmr2_v2",
+                      "epoch": 14,
+                      "stage": "last_stage",
+                      "accepted": false,
+                      "acceptance_state": null,
+                      "validation": {
+                        "raw_cosine_mean": 0.8956096768379211,
+                        "raw_cosine_p05": 0.7605651617050171,
+                        "centered_cosine_mean": 0.6976122260093689,
+                        "centered_cosine_p05": 0.3771888315677643,
+                        "raw_rmse": 0.446309894323349,
+                        "normalized_rmse": 0.7290211319923401,
+                        "pose_rotation_error_deg": 11.646503448486328,
+                        "root_rotation_error_deg": 38.565250396728516,
+                        "body_rotation_error_deg": 10.476120948791504
+                      },
+                      "phase3_validation": null,
+                      "phase3_metadata": null
+                    },
+                    "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+                    "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+                    "train_parsed_sha256": "76b0b15cba524d96387b5c806ddc67b326341931e8b2d2911aa20957fa9f6e8e",
+                    "val_parsed_sha256": "506347e8b0095dafc98f25a188fca876591b2abd4e6d448176c7db0e8cb8e830",
+                    "test_data_used": false,
+                    "clip_length": 32,
+                    "stride": 16,
+                    "training_tracks": 34,
+                    "training_clips": 1366,
+                    "loss_weights": {
+                      "token": 0.25,
+                      "raw_cosine": 0.25,
+                      "centered_cosine": 0.25,
+                      "wham_pose": 25.0,
+                      "wham_root": 10.0
+                    },
+                    "thresholds": {
+                      "max_pose_degradation_deg": 1.0,
+                      "max_relative_pose_degradation": 0.1,
+                      "max_teacher_drift_deg": 5.0
+                    },
+                    "seed": 20260909
+                  }
+                },
+                "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+                "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+                "train_parsed_sha256": "76b0b15cba524d96387b5c806ddc67b326341931e8b2d2911aa20957fa9f6e8e",
+                "val_parsed_sha256": "506347e8b0095dafc98f25a188fca876591b2abd4e6d448176c7db0e8cb8e830",
+                "test_data_used": false,
+                "clip_length": 32,
+                "stride": 16,
+                "training_tracks": 34,
+                "training_clips": 1366,
+                "loss_weights": {
+                  "token": 0.25,
+                  "raw_cosine": 0.25,
+                  "centered_cosine": 0.25,
+                  "wham_pose": 40.0,
+                  "wham_root": 15.0
+                },
+                "thresholds": {
+                  "max_pose_degradation_deg": 1.0,
+                  "max_relative_pose_degradation": 0.1,
+                  "max_teacher_drift_deg": 5.0
+                },
+                "seed": 20260909
+              }
+            },
+            "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+            "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+            "train_parsed_sha256": "76b0b15cba524d96387b5c806ddc67b326341931e8b2d2911aa20957fa9f6e8e",
+            "val_parsed_sha256": "506347e8b0095dafc98f25a188fca876591b2abd4e6d448176c7db0e8cb8e830",
+            "test_data_used": false,
+            "clip_length": 32,
+            "stride": 16,
+            "training_tracks": 34,
+            "training_clips": 1366,
+            "loss_weights": {
+              "token": 0.25,
+              "raw_cosine": 0.25,
+              "centered_cosine": 0.25,
+              "wham_pose": 4.0,
+              "wham_root": 1.5,
+              "wham_gt_pose": 1.0,
+              "wham_gt_root": 0.0
+            },
+            "rotation_loss": "geodesic",
+            "thresholds": {
+              "max_pose_degradation_deg": 1.0,
+              "max_relative_pose_degradation": 0.1,
+              "max_teacher_drift_deg": 5.0
+            },
+            "seed": 20260909
+          }
+        },
+        "wham_commit": "2b54f7797391c94876848b905ed875b154c4a295",
+        "wham_checkpoint_sha256": "2ba0cb6a7dd597023a6b2ad6056e7a8b6b33144a35fabea570bfd00842cd4eaf",
+        "train_parsed_sha256": "76b0b15cba524d96387b5c806ddc67b326341931e8b2d2911aa20957fa9f6e8e",
+        "val_parsed_sha256": "506347e8b0095dafc98f25a188fca876591b2abd4e6d448176c7db0e8cb8e830",
+        "test_data_used": false,
+        "clip_length": 32,
+        "stride": 16,
+        "training_tracks": 34,
+        "training_clips": 1366,
+        "loss_weights": {
+          "token": 0.25,
+          "raw_cosine": 0.25,
+          "centered_cosine": 0.25,
+          "wham_pose": 4.0,
+          "wham_root": 1.5,
+          "wham_gt_pose": 1.0,
+          "wham_gt_root": 0.0
+        },
+        "rotation_loss": "geodesic",
+        "thresholds": {
+          "max_pose_degradation_deg": 1.0,
+          "max_relative_pose_degradation": 0.1,
+          "max_teacher_drift_deg": 5.0
+        },
+        "seed": 20260909
+      }
+    },
+    "parsed_3dpw_sha256": "cccd6023e0dce846a8b9376445fd977fe2caa5868f841821a816a6cb4e37b17e",
+    "yolov8_weights_sha256": "c6fa93dd1ee4a2c18c900a45c1d864a1c6f7aba75d84f91648a30b7fb641d212",
+    "h36m_joint_regressor_sha256": "c655cd7013d7829eb9acbebf0e43f952a3fa0305a53c35880e39192bfb6444a0",
+    "artifact_bytes": {
+      "released_wham_checkpoint": 190975610,
+      "phase3_fastvit_training_checkpoint": 89591891,
+      "yolov8n_pose_pytorch_weights": 6832633
+    },
+    "phase3_fastvit_parameters": 22237504
+  },
+  "variants": {
+    "paper_wham_bedlam_flip": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 34524,
+          "mean": 35.69763668552223,
+          "p50": 31.610529899597168,
+          "p95": 66.28105163574216,
+          "max": 182.8013153076172
+        },
+        "mpjpe_mm": {
+          "samples": 34524,
+          "mean": 57.614373087482456,
+          "p50": 52.96682357788086,
+          "p95": 98.3220989227295,
+          "max": 476.5843200683594
+        },
+        "pve_mm": {
+          "samples": 34524,
+          "mean": 68.63787052383043,
+          "p50": 63.08535194396973,
+          "p95": 119.03444252014158,
+          "max": 530.5149536132812
+        },
+        "accel_official_30fps": {
+          "samples": 34376,
+          "mean": 6.51167353555085,
+          "p50": 4.488501787185669,
+          "p95": 14.936598777770996,
+          "max": 484.0087585449219
+        }
+      },
+      "work_seconds": {
+        "wham_core": 131.14541718399983,
+        "smpl_evaluation_decode": 6.243116888001168
+      }
+    },
+    "paper_wham_bedlam_no_flip": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 34524,
+          "mean": 37.187071743244616,
+          "p50": 33.417972564697266,
+          "p95": 67.54797058105468,
+          "max": 186.1782989501953
+        },
+        "mpjpe_mm": {
+          "samples": 34524,
+          "mean": 59.407160820738355,
+          "p50": 54.972496032714844,
+          "p95": 100.74240570068355,
+          "max": 472.6160888671875
+        },
+        "pve_mm": {
+          "samples": 34524,
+          "mean": 71.01453213243659,
+          "p50": 65.65744018554688,
+          "p95": 121.52205696105953,
+          "max": 529.3012084960938
+        },
+        "accel_official_30fps": {
+          "samples": 34376,
+          "mean": 6.917161620092206,
+          "p50": 4.85883355140686,
+          "p95": 15.821825742721558,
+          "max": 469.0854797363281
+        }
+      },
+      "work_seconds": {
+        "wham_core": 64.659230737999,
+        "smpl_evaluation_decode": 4.175627915000746
+      }
+    },
+    "fastvit_official_inputs": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 34524,
+          "mean": 47.495589050159936,
+          "p50": 43.38844108581543,
+          "p95": 83.0035388946533,
+          "max": 186.84031677246094
+        },
+        "mpjpe_mm": {
+          "samples": 34524,
+          "mean": 72.53107724998023,
+          "p50": 68.19321823120117,
+          "p95": 119.15522994995112,
+          "max": 493.2527770996094
+        },
+        "pve_mm": {
+          "samples": 34524,
+          "mean": 87.8054505211635,
+          "p50": 81.33662414550781,
+          "p95": 145.658487701416,
+          "max": 559.837158203125
+        },
+        "accel_official_30fps": {
+          "samples": 34376,
+          "mean": 8.089680958850483,
+          "p50": 6.029980421066284,
+          "p95": 17.261481761932373,
+          "max": 457.70465087890625
+        }
+      },
+      "work_seconds": {
+        "fastvit": 149.03845161799825,
+        "wham_core": 64.16600516700043,
+        "smpl_evaluation_decode": 4.075855933000298
+      }
+    },
+    "iphone_subset_yolov8": {
+      "metrics": {
+        "pa_mpjpe_mm": {
+          "samples": 11349,
+          "mean": 72.19102646241745,
+          "p50": 68.02135467529297,
+          "p95": 124.58831481933593,
+          "max": 225.57899475097656
+        },
+        "mpjpe_mm": {
+          "samples": 11349,
+          "mean": 159.34010226741867,
+          "p50": 127.44983673095703,
+          "p95": 334.1560791015625,
+          "max": 786.984619140625
+        },
+        "pve_mm": {
+          "samples": 11349,
+          "mean": 181.45991969278745,
+          "p50": 148.63414001464844,
+          "p95": 369.4887817382813,
+          "max": 797.7197875976562
+        },
+        "accel_official_30fps": {
+          "samples": 11305,
+          "mean": 15.724564671785311,
+          "p50": 8.8355712890625,
+          "p95": 47.573156738281234,
+          "max": 567.7062377929688
+        }
+      },
+      "work_seconds": {
+        "yolo_pose": 60.04297235999843,
+        "fastvit": 47.07445266100103,
+        "wham_core": 21.52615562400092,
+        "smpl_evaluation_decode": 1.3316072710001663
+      }
+    }
+  },
+  "controlled_fastvit": {
+    "student_teacher_pose_drift": {
+      "all_joints_deg": {
+        "samples": 828576,
+        "mean": 5.197394723565357,
+        "p50": 3.820697784423828,
+        "p95": 14.483078002929688,
+        "max": 147.63925170898438
+      },
+      "root_deg": {
+        "samples": 34524,
+        "mean": 5.038669062838996,
+        "p50": 4.301565408706665,
+        "p95": 10.956275558471678,
+        "max": 147.63925170898438
+      },
+      "body_deg": {
+        "samples": 794052,
+        "mean": 5.204295839249112,
+        "p50": 3.797049045562744,
+        "p95": 14.64385113716125,
+        "max": 80.0284652709961
+      }
+    },
+    "minus_paper_wham_bedlam_no_flip": {
+      "pa_mpjpe_mm": 10.30851730691532,
+      "mpjpe_mm": 13.123916429241874,
+      "pve_mm": 16.790918388726908
+    }
+  },
+  "iphone_reference_paper_wham_single_person_subset": {
+    "metrics": {
+      "pa_mpjpe_mm": {
+        "samples": 11349,
+        "mean": 32.66937072048713,
+        "p50": 28.466869354248047,
+        "p95": 59.227034759521494,
+        "max": 154.8671417236328
+      },
+      "mpjpe_mm": {
+        "samples": 11349,
+        "mean": 55.57580911372661,
+        "p50": 51.22311019897461,
+        "p95": 91.11150665283203,
+        "max": 336.0549011230469
+      },
+      "pve_mm": {
+        "samples": 11349,
+        "mean": 65.6364644886124,
+        "p50": 60.21247482299805,
+        "p95": 107.67175903320313,
+        "max": 341.62725830078125
+      },
+      "accel_official_30fps": {
+        "samples": 11305,
+        "mean": 6.226210307692702,
+        "p50": 4.801836967468262,
+        "p95": 13.031492614746092,
+        "max": 275.98284912109375
+      }
+    },
+    "person_tracks": 11
+  },
+  "iphone_minus_paper_wham_same_single_person_subset": {
+    "pa_mpjpe_mm": 39.521655741930324,
+    "mpjpe_mm": 103.76429315369205,
+    "pve_mm": 115.82345520417505
+  },
+  "iphone_relative_change_vs_paper_wham_same_single_person_subset": {
+    "pa_mpjpe_mm": 1.2097464649708143,
+    "mpjpe_mm": 1.8670766077621246,
+    "pve_mm": 1.7646205673413418
+  },
+  "iphone_detection": {
+    "detections": 11215,
+    "source_frames": 11360,
+    "rate": 0.9872359154929577
+  }
+}

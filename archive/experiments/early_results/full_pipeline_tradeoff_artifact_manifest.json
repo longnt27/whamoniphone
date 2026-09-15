@@ -1,0 +1,7 @@
+{
+  "student_checkpoint_sha256": "f15875f3fed12538312f59956b6c93e9cca2ab41a9e8d87edf593dd85f311ab1",
+  "coreml_zip": "FastViTNormalized_phase3_diagnostic.zip",
+  "deployment_accepted": false,
+  "purpose": "single physical-iPhone latency diagnostic",
+  "full_evaluation_report": "full_pipeline_tradeoff_3dpw.json"
+}

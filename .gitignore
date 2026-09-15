@@ -1,3 +1,6 @@
 *.mlpackage
 WhamApp/WhamApp.xcodeproj
 *.DS_Store
+__pycache__/
+*.py[cod]
+.venv-coreml/

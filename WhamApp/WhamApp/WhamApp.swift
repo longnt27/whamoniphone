@@ -21,6 +21,11 @@ struct WhamApp: App {
                     .tabItem {
                         Label("Video Thầy", systemImage: "folder.badge.gearshape")
                     }
+
+                BenchmarkView()
+                    .tabItem {
+                        Label("Benchmark", systemImage: "gauge.with.dots.needle.67percent")
+                    }
             }
         }
     }

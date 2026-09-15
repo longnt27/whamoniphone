@@ -11,6 +11,64 @@ import CoreML
 
 struct WhamAppTests {
 
+    @Test func selectedMobilePipelineCatalogIsLocked() {
+        #expect(MobileWhamModelCatalog.resourceNames == [
+            "yolo26m-pose",
+            "HMR2SFrontend",
+            "HMR2SSMPLInit",
+            "HMR2STokenAdapter",
+            "WHAM_I",
+            "WHAM_ImageStep",
+            "WHAM_WorldStep"
+        ])
+        #expect(
+            MobileWhamModelCatalog.yoloWeightsSHA256
+                == "2fbf16367022256a226035695c5c389384c6706e8bb8ab8fcd0e7976f05443c4"
+        )
+        #expect(
+            MobileWhamModelCatalog.adapterCheckpointSHA256
+                == "4fd581b2b7f2d0cac8bda7597692f7e77ca082435c5e352c69964d64da10f526"
+        )
+    }
+
+    @Test func missingMobileObservationUsesMaskedFloat16Tensors() throws {
+        let observation = try MobileWhamPreprocessor.missingFrame(videoTime: 1.25)
+
+        #expect(observation.keypoints.shape.map(\.intValue) == [1, 1, 37])
+        #expect(observation.keypoints.dataType == .float16)
+        #expect(observation.keypointMask.shape.map(\.intValue) == [1, 1, 17])
+        #expect(observation.keypointMask.dataType == .float16)
+        #expect((0..<17).allSatisfy {
+            observation.keypointMask[$0].floatValue == 1
+        })
+        #expect(observation.imageFeature.shape.map(\.intValue) == [1, 1, 1024])
+        #expect(observation.imageFeature.dataType == .float16)
+        #expect(observation.imageFeatureValid[0].floatValue == 0)
+        #expect(observation.hmrPose == nil)
+        #expect(observation.hmrBetas == nil)
+        #expect(observation.videoTime == 1.25)
+    }
+
+    @Test func smoothingIsOutputOnlyForRecurrentFeedback() throws {
+        let rawPose = try MLMultiArray(shape: [1, 1, 144], dataType: .float16)
+        let smoothedPose = try MLMultiArray(
+            shape: [1, 1, 144],
+            dataType: .float16
+        )
+        rawPose[0] = 0.25
+        smoothedPose[0] = 0.75
+
+        let routing = MobileWhamCore.outputOnlyPoseRouting(
+            rawPose: rawPose,
+            smoothedPose: smoothedPose
+        )
+
+        #expect(routing.recurrentPose === rawPose)
+        #expect(routing.outputPose === smoothedPose)
+        #expect(routing.recurrentPose[0].floatValue == 0.25)
+        #expect(routing.outputPose[0].floatValue == 0.75)
+    }
+
     @Test func parsesYOLOv8PoseLayout() throws {
         let output = try MLMultiArray(shape: [1, 56, 2], dataType: .float32)
         output[[0, 4, 1] as [NSNumber]] = NSNumber(value: 0.9)

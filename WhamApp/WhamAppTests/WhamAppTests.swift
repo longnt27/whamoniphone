@@ -302,8 +302,31 @@ struct WhamAppTests {
 
         #expect(engine.meshAvailable == false)
         #expect(engine.presentationMode == .skeleton)
+        #expect(
+            engine.scene.rootNode.childNode(
+                withName: WorldAxisGizmo.rootName,
+                recursively: false
+            ) != nil
+        )
         engine.setPresentationMode(.mesh)
         #expect(engine.presentationMode == .skeleton)
+    }
+
+    @Test func worldAxisGizmoUsesStandardPositiveDirections() throws {
+        let gizmo = WorldAxisGizmo.make(length: 1)
+        let xTip = try #require(
+            gizmo.childNode(withName: "world-axis-x-tip", recursively: true)
+        )
+        let yTip = try #require(
+            gizmo.childNode(withName: "world-axis-y-tip", recursively: true)
+        )
+        let zTip = try #require(
+            gizmo.childNode(withName: "world-axis-z-tip", recursively: true)
+        )
+
+        #expect(xTip.simdPosition == SIMD3<Float>(1, 0, 0))
+        #expect(yTip.simdPosition == SIMD3<Float>(0, 1, 0))
+        #expect(zTip.simdPosition == SIMD3<Float>(0, 0, 1))
     }
 
     @Test func bodyPresentationDefaultsToMeshOnlyWhenComplete() {

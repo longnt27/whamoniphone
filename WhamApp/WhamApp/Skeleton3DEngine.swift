@@ -85,6 +85,8 @@ class Skeleton3DEngine: ObservableObject, BodyPresentationControlling {
         lightNode.position = SCNVector3(0, 5, 5)
         scene.rootNode.addChildNode(lightNode)
 
+        scene.rootNode.addChildNode(WorldAxisGizmo.make())
+
         meshNode.name = "WHAM SMPL mesh"
         scene.rootNode.addChildNode(meshNode)
 

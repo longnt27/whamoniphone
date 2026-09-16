@@ -366,7 +366,8 @@ final class WhamBenchmark: ObservableObject {
                 frontend = MobileWhamFrontendOutput(
                     token: try MobileWhamArrays.required(provider, "image_token"),
                     pose: try MobileWhamArrays.required(provider, "pose_6d"),
-                    betas: try MobileWhamArrays.required(provider, "betas")
+                    betas: try MobileWhamArrays.required(provider, "betas"),
+                    camera: try MobileWhamArrays.required(provider, "camera")
                 )
             }
 

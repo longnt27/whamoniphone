@@ -199,8 +199,8 @@ struct AnalyzedTabView: View {
     }
 }
 
-private struct BodyPresentationPicker: View {
-    @ObservedObject var engine: Skeleton3DEngine
+private struct BodyPresentationPicker<Engine: BodyPresentationControlling>: View {
+    @ObservedObject var engine: Engine
     let meshCacheAvailable: Bool
     let onChange: () -> Void
 
@@ -237,9 +237,11 @@ struct VideoOverlayView: View {
     let meshReader: SMPLMeshCache.Reader?
     let meshStatus: String
 
-    @StateObject private var engine = Skeleton3DEngine()
+    @StateObject private var engine = VideoOverlayEngine()
     @State private var player: AVPlayer
     @State private var lastRenderedFrame = -1
+    @State private var timestamps: [Double] = []
+    @State private var viewportSize: CGSize = .zero
 
     let timer = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
@@ -257,43 +259,57 @@ struct VideoOverlayView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            VideoPlayer(player: player)
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                VideoPlayer(player: player)
 
-            SceneView(
-                scene: engine.scene,
-                pointOfView: engine.cameraNode,
-                options: []
-            )
-            .background(Color.clear)
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-
-            VStack(spacing: 6) {
-                BodyPresentationPicker(
-                    engine: engine,
-                    meshCacheAvailable: meshReader != nil,
-                    onChange: refreshCurrentFrame
+                TransparentSceneView(
+                    scene: engine.scene,
+                    pointOfView: engine.cameraNode
                 )
-                if engine.presentationMode == .skeleton && meshReader == nil {
-                    Text(meshStatus)
-                        .font(.caption2)
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
-                } else if engine.presentationMode == .skeleton && !engine.meshAvailable {
-                    Text("Generate and bundle SMPLFaces.bin to enable mesh rendering")
-                        .font(.caption2)
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
+                .allowsHitTesting(false)
+
+                VStack(spacing: 6) {
+                    BodyPresentationPicker(
+                        engine: engine,
+                        meshCacheAvailable: meshReader != nil,
+                        onChange: refreshCurrentFrame
+                    )
+                    if !projectionMetadataAvailable {
+                        Text("Re-analyze this video once to generate a camera-aligned overlay")
+                            .font(.caption2)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                    } else if engine.presentationMode == .skeleton && meshReader == nil {
+                        Text(meshStatus)
+                            .font(.caption2)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                    } else if engine.presentationMode == .skeleton && !engine.meshAvailable {
+                        Text("Generate and bundle SMPLFaces.bin to enable mesh rendering")
+                            .font(.caption2)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                    }
                 }
+                .padding(10)
+                .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+                .padding(.top, 8)
             }
-            .padding(10)
-            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
-            .padding(.top, 8)
+            .onAppear {
+                viewportSize = geometry.size
+                synchronizeTimeline()
+                selectDefaultPresentation()
+                refreshCurrentFrame()
+            }
+            .onChange(of: geometry.size) {
+                viewportSize = geometry.size
+                refreshCurrentFrame()
+            }
         }
-        .onAppear {
-            selectDefaultPresentation()
+        .ignoresSafeArea()
+        .onChange(of: whamData.count) {
+            synchronizeTimeline()
             refreshCurrentFrame()
         }
         .onChange(of: meshReader?.frameCount) {
@@ -303,11 +319,11 @@ struct VideoOverlayView: View {
         .onReceive(timer) { _ in
             guard whamData.count > 0 else { return }
 
-            let currentTime = player.currentTime().seconds
-            let fps: Double = 30.0
-            let frameIndex = Int(currentTime * fps)
-            let safeIndex = max(0, min(frameIndex, whamData.count - 1))
-            updateBody(frameIndex: safeIndex)
+            let frameIndex = VideoOverlayTimeline.frameIndex(
+                at: player.currentTime().seconds,
+                timestamps: timestamps
+            )
+            updateBody(frameIndex: frameIndex)
         }
         .onDisappear {
             player.pause()
@@ -323,15 +339,40 @@ struct VideoOverlayView: View {
 
     private func refreshCurrentFrame() {
         lastRenderedFrame = -1
-        let frameIndex = Int(max(player.currentTime().seconds, 0) * 30)
+        let frameIndex = VideoOverlayTimeline.frameIndex(
+            at: player.currentTime().seconds,
+            timestamps: timestamps
+        )
         updateBody(frameIndex: frameIndex)
     }
 
+    private var projectionMetadataAvailable: Bool {
+        whamData.contains { VideoOverlayMetadata(dictionary: $0) != nil }
+    }
+
+    private func synchronizeTimeline() {
+        timestamps = whamData.enumerated().map { index, frame in
+            if let number = frame["timestamp_seconds"] as? NSNumber {
+                return number.doubleValue
+            }
+            if let value = frame["timestamp_seconds"] as? Double {
+                return value
+            }
+            return Double(index) / 30
+        }
+    }
+
     private func updateBody(frameIndex: Int) {
-        guard !whamData.isEmpty else { return }
+        guard !whamData.isEmpty, viewportSize.width > 0, viewportSize.height > 0 else {
+            return
+        }
         let safeIndex = max(0, min(frameIndex, whamData.count - 1))
         guard safeIndex != lastRenderedFrame,
-              let keypoints = whamFloatArray(whamData[safeIndex]["keypoints_3d"]) else {
+              let keypoints = whamFloatArray(whamData[safeIndex]["keypoints_3d"]),
+              let metadata = VideoOverlayMetadata(
+                dictionary: whamData[safeIndex]
+              ) else {
+            engine.clear()
             return
         }
 
@@ -339,8 +380,10 @@ struct VideoOverlayView: View {
             ? try? meshReader?.frame(at: safeIndex)
             : nil
         engine.applyFrameData(
-            keypoints3D: keypoints,
-            meshVertices: vertices ?? nil
+            keypointsWorld: keypoints,
+            meshVerticesWorld: vertices ?? nil,
+            metadata: metadata,
+            viewportSize: viewportSize
         )
         lastRenderedFrame = safeIndex
     }

@@ -50,13 +50,34 @@ enum SMPLMeshGeometry {
         let vertices = worldVertices.map { vertex in
             SIMD3<Float>(vertex.x, -vertex.y, -vertex.z)
         }
+        return makeSceneGeometry(vertices: vertices, topology: topology)
+    }
+
+    static func makeVideoOverlay(
+        projectedVertices: [SIMD3<Float>],
+        viewportSize: CGSize,
+        topology: SMPLTopology
+    ) -> SCNGeometry? {
+        guard projectedVertices.count == topology.vertexCount,
+              viewportSize.width > 0,
+              viewportSize.height > 0 else {
+            return nil
+        }
+        let halfWidth = Float(viewportSize.width / 2)
+        let halfHeight = Float(viewportSize.height / 2)
+        let vertices = projectedVertices.map {
+            SIMD3<Float>($0.x - halfWidth, halfHeight - $0.y, $0.z)
+        }
+        return makeSceneGeometry(vertices: vertices, topology: topology)
+    }
+
+    private static func makeSceneGeometry(
+        vertices: [SIMD3<Float>],
+        topology: SMPLTopology
+    ) -> SCNGeometry {
         let normals = vertexNormals(vertices: vertices, faces: topology.indices)
-        let sceneVertices = vertices.map {
-            SCNVector3($0.x, $0.y, $0.z)
-        }
-        let sceneNormals = normals.map {
-            SCNVector3($0.x, $0.y, $0.z)
-        }
+        let sceneVertices = vertices.map { SCNVector3($0.x, $0.y, $0.z) }
+        let sceneNormals = normals.map { SCNVector3($0.x, $0.y, $0.z) }
         let indexData = topology.indices.withUnsafeBytes { Data($0) }
         let element = SCNGeometryElement(
             data: indexData,
@@ -71,7 +92,11 @@ enum SMPLMeshGeometry {
             ],
             elements: [element]
         )
+        geometry.materials = [bodyMaterial()]
+        return geometry
+    }
 
+    private static func bodyMaterial() -> SCNMaterial {
         let material = SCNMaterial()
         material.name = "WHAM SMPL body"
         material.lightingModel = .physicallyBased
@@ -80,7 +105,6 @@ enum SMPLMeshGeometry {
         material.roughness.contents = 0.52
         material.transparency = 0.82
         material.isDoubleSided = true
-        geometry.materials = [material]
-        return geometry
+        return material
     }
 }

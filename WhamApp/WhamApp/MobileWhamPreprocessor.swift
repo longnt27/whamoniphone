@@ -27,6 +27,9 @@ struct MobileWhamPreprocessor {
             imageFeatureValid: try MobileWhamArrays.scalar(0, dataType: .float16),
             hmrPose: nil,
             hmrBetas: nil,
+            hmrCamera: nil,
+            hmrCropBox: nil,
+            sourceSize: .zero,
             videoTime: videoTime
         )
     }
@@ -40,7 +43,12 @@ struct MobileWhamPreprocessor {
             return MobileWhamVisualObservation(
                 keypoints: missing.keypoints,
                 keypointMask: missing.keypointMask,
-                crop: nil
+                crop: nil,
+                cropBox: nil,
+                sourceSize: CGSize(
+                    width: CVPixelBufferGetWidth(source),
+                    height: CVPixelBufferGetHeight(source)
+                )
             )
         }
         let width = CGFloat(CVPixelBufferGetWidth(source))
@@ -59,7 +67,9 @@ struct MobileWhamPreprocessor {
         return MobileWhamVisualObservation(
             keypoints: keypoints,
             keypointMask: mask,
-            crop: cropPixelBuffer(source, to: box)
+            crop: cropPixelBuffer(source, to: box),
+            cropBox: box,
+            sourceSize: CGSize(width: width, height: height)
         )
     }
 
@@ -81,6 +91,9 @@ struct MobileWhamPreprocessor {
             ),
             hmrPose: frontend?.pose,
             hmrBetas: frontend?.betas,
+            hmrCamera: frontend?.camera,
+            hmrCropBox: visual.cropBox,
+            sourceSize: visual.sourceSize,
             videoTime: videoTime
         )
     }

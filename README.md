@@ -154,9 +154,11 @@ selected network.
 - The filled SceneKit viewer renders the full 6,890-vertex SMPL body, but the
   existing phone benchmark measures inference rather than rendering cost.
 - A `.whammesh` cache costs about 41 KB per frame, or 74 MB per minute at
-  30 fps. JSON-only legacy results still open with the skeleton fallback.
-- The video tab visualizes world-space output over the player; it is not a
-  calibrated pixel overlay because camera intrinsics are not retained.
+  30 fps. Legacy results still open, but must be analyzed once more to add the
+  camera/crop metadata required by the aligned video overlay.
+- The video tab uses HMR2-S's estimated crop camera rather than measured phone
+  intrinsics. It aligns the mesh through the same projection used by HMR2, but
+  residual HMR/detector errors can still produce visible registration error.
 
 ## Attribution
 

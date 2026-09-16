@@ -8,9 +8,99 @@
 import Testing
 import CoreML
 import Foundation
+import SceneKit
+import UIKit
 @testable import WhamApp
 
 struct WhamAppTests {
+
+    @Test func videoOverlayProjectsWithOfficialHMR2CropCamera() throws {
+        let metadata = VideoOverlayMetadata(
+            camera: SIMD3<Float>(2, 0, 0),
+            cropCenter: CGPoint(x: 480, y: 270),
+            cropSize: 540,
+            sourceSize: CGSize(width: 1920, height: 1080),
+            poseRoot6D: [1, 0, 0, 0, 1, 0],
+            refinedRoot6D: [1, 0, 0, 0, 1, 0],
+            worldTranslation: SIMD3<Float>(0, 0, 0)
+        )
+
+        let projected = SMPLVideoProjector.projectToSourcePixels(
+            cameraVertices: [
+                SIMD3<Float>(0, 0, 0),
+                SIMD3<Float>(0.5, 0.5, 0),
+            ],
+            metadata: metadata
+        )
+
+        #expect(abs(projected[0].x - 480) < 0.001)
+        #expect(abs(projected[0].y - 270) < 0.001)
+        #expect(abs(projected[1].x - 750) < 0.001)
+        #expect(abs(projected[1].y - 540) < 0.001)
+    }
+
+    @Test func videoOverlayUndoesWhamWorldTransformBeforeProjection() throws {
+        let metadata = VideoOverlayMetadata(
+            camera: SIMD3<Float>(2, 0, 0),
+            cropCenter: CGPoint(x: 960, y: 540),
+            cropSize: 540,
+            sourceSize: CGSize(width: 1920, height: 1080),
+            poseRoot6D: [1, 0, 0, 0, 1, 0],
+            refinedRoot6D: [0, -1, 0, 1, 0, 0],
+            worldTranslation: SIMD3<Float>(4, 5, 6)
+        )
+        let cameraVertex = SIMD3<Float>(0.25, -0.5, 1.5)
+        let worldVertex = SMPLVideoProjector.cameraToWorld(
+            cameraVertex,
+            metadata: metadata
+        )
+
+        let recovered = try #require(
+            SMPLVideoProjector.worldToCamera(
+                [worldVertex],
+                metadata: metadata
+            ).first
+        )
+
+        #expect(simd_distance(recovered, cameraVertex) < 0.0001)
+    }
+
+    @Test func videoOverlayMapsPixelsIntoAspectFitVideoRect() throws {
+        let viewport = CGSize(width: 390, height: 844)
+        let source = CGSize(width: 1920, height: 1080)
+        let videoRect = SMPLVideoProjector.aspectFitRect(
+            sourceSize: source,
+            viewportSize: viewport
+        )
+        let mapped = SMPLVideoProjector.mapSourcePixelsToViewport(
+            [SIMD3<Float>(960, 540, 8)],
+            sourceSize: source,
+            viewportSize: viewport
+        )
+
+        #expect(abs(videoRect.width - 390) < 0.001)
+        #expect(abs(videoRect.height - 219.375) < 0.001)
+        #expect(abs(mapped[0].x - 195) < 0.001)
+        #expect(abs(mapped[0].y - 422) < 0.001)
+        #expect(mapped[0].z == -8)
+    }
+
+    @Test @MainActor func videoOverlaySceneViewIsActuallyTransparent() {
+        let view = VideoOverlaySceneView(frame: .zero)
+
+        #expect(view.isOpaque == false)
+        #expect(view.backgroundColor?.cgColor.alpha == 0)
+        #expect(view.scene?.background.contents as? UIColor == UIColor.clear)
+    }
+
+    @Test func videoOverlaySelectsFramesByRecordedTimestamp() {
+        let timestamps = [0.0, 0.04, 0.10, 0.18]
+
+        #expect(VideoOverlayTimeline.frameIndex(at: 0.00, timestamps: timestamps) == 0)
+        #expect(VideoOverlayTimeline.frameIndex(at: 0.07, timestamps: timestamps) == 1)
+        #expect(VideoOverlayTimeline.frameIndex(at: 0.17, timestamps: timestamps) == 2)
+        #expect(VideoOverlayTimeline.frameIndex(at: 9.00, timestamps: timestamps) == 3)
+    }
 
     @Test func smplMeshCacheRoundTripsFloat16Frames() throws {
         let directory = FileManager.default.temporaryDirectory
@@ -272,7 +362,52 @@ struct WhamAppTests {
         #expect(observation.imageFeatureValid[0].floatValue == 0)
         #expect(observation.hmrPose == nil)
         #expect(observation.hmrBetas == nil)
+        #expect(observation.hmrCamera == nil)
+        #expect(observation.hmrCropBox == nil)
+        #expect(observation.sourceSize == .zero)
         #expect(observation.videoTime == 1.25)
+    }
+
+    @Test func mobileObservationRetainsHMRProjectionContract() throws {
+        let camera = try MLMultiArray(shape: [1, 1, 3], dataType: .float16)
+        camera[0] = 2
+        camera[1] = 0.1
+        camera[2] = -0.2
+        let cropBox = CGRect(x: 12, y: 34, width: 200, height: 200)
+        let visual = MobileWhamVisualObservation(
+            keypoints: try MobileWhamArrays.zeros(
+                [1, 1, 37], dataType: .float16
+            ),
+            keypointMask: try MobileWhamArrays.zeros(
+                [1, 1, 17], dataType: .float16
+            ),
+            crop: nil,
+            cropBox: cropBox,
+            sourceSize: CGSize(width: 640, height: 480)
+        )
+        let frontend = MobileWhamFrontendOutput(
+            token: try MobileWhamArrays.zeros(
+                [1, 1, 1024], dataType: .float16
+            ),
+            pose: try MobileWhamArrays.zeros(
+                [1, 1, 24, 6], dataType: .float16
+            ),
+            betas: try MobileWhamArrays.zeros(
+                [1, 1, 10], dataType: .float16
+            ),
+            camera: camera
+        )
+
+        let observation = try MobileWhamPreprocessor.frame(
+            visual: visual,
+            frontend: frontend,
+            adaptedFeature: nil,
+            videoTime: 0.5
+        )
+
+        #expect(observation.hmrCamera === camera)
+        #expect(observation.hmrCropBox == cropBox)
+        #expect(observation.sourceSize == CGSize(width: 640, height: 480))
     }
 
     @Test func smoothingIsOutputOnlyForRecurrentFeedback() throws {

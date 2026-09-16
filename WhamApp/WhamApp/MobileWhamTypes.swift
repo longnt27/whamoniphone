@@ -5,6 +5,8 @@ struct MobileWhamVisualObservation {
     let keypoints: MLMultiArray
     let keypointMask: MLMultiArray
     let crop: CVPixelBuffer?
+    let cropBox: CGRect?
+    let sourceSize: CGSize
 }
 
 struct MobileWhamFrameObservation {
@@ -14,6 +16,9 @@ struct MobileWhamFrameObservation {
     let imageFeatureValid: MLMultiArray
     let hmrPose: MLMultiArray?
     let hmrBetas: MLMultiArray?
+    let hmrCamera: MLMultiArray?
+    let hmrCropBox: CGRect?
+    let sourceSize: CGSize
     let videoTime: Double
 }
 
@@ -21,6 +26,7 @@ struct MobileWhamFrontendOutput {
     let token: MLMultiArray
     let pose: MLMultiArray
     let betas: MLMultiArray
+    let camera: MLMultiArray
 }
 
 enum MobileWhamArrays {

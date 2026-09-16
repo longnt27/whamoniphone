@@ -143,7 +143,8 @@ class WhamAnalyzer: ObservableObject {
                         let frontend = MobileWhamFrontendOutput(
                             token: try MobileWhamArrays.required(hmr, "image_token"),
                             pose: try MobileWhamArrays.required(hmr, "pose_6d"),
-                            betas: try MobileWhamArrays.required(hmr, "betas")
+                            betas: try MobileWhamArrays.required(hmr, "betas"),
+                            camera: try MobileWhamArrays.required(hmr, "camera")
                         )
                         let adapted = try MobileWhamArrays.predict(tokenAdapter, [
                             "hmr2s_token": MLFeatureValue(
@@ -219,6 +220,9 @@ class WhamAnalyzer: ObservableObject {
                 let meshWriter = try SMPLMeshCache.Writer(
                     outputURL: SMPLMeshCache.outputURL(forJSONURL: outputURL)
                 )
+                var lastProjectionObservation = observations.first(
+                    where: self.hasProjectionMetadata
+                )
 
                 await MainActor.run {
                     self.statusMessage = "Đang chạy WHAM + world + smoothing (2/2)..."
@@ -246,7 +250,10 @@ class WhamAnalyzer: ObservableObject {
                         try meshWriter.append(meshVertices)
                     }
 
-                    results.append([
+                    if self.hasProjectionMetadata(observation) {
+                        lastProjectionObservation = observation
+                    }
+                    var result: [String: Any] = [
                         "frame": index,
                         "timestamp_seconds": observation.videoTime,
                         "pose_6d": MobileWhamArrays.floats(step.pose),
@@ -263,7 +270,14 @@ class WhamAnalyzer: ObservableObject {
                             step.keypointsRootRelative
                         ),
                         "image_feature_valid": observation.imageFeatureValid[0].floatValue
-                    ])
+                    ]
+                    if let projectionObservation = lastProjectionObservation {
+                        self.addProjectionMetadata(
+                            from: projectionObservation,
+                            to: &result
+                        )
+                    }
+                    results.append(result)
 
                     let inferenceProgress = 0.5 + Double(index) / Double(observations.count - 1) * 0.5
                     await MainActor.run { self.progress = inferenceProgress }
@@ -285,6 +299,17 @@ class WhamAnalyzer: ObservableObject {
                         .outputURL(forJSONURL: outputURL)
                         .lastPathComponent
                     warmStart["smpl_vertex_count"] = SMPLMeshCache.expectedVertexCount
+                    let initialProjectionObservation = self.hasProjectionMetadata(
+                        observations[0]
+                    ) ? observations[0] : observations.first(
+                        where: self.hasProjectionMetadata
+                    )
+                    if let initialProjectionObservation {
+                        self.addProjectionMetadata(
+                            from: initialProjectionObservation,
+                            to: &warmStart
+                        )
+                    }
                     results.insert(warmStart, at: 0)
                 }
 
@@ -312,6 +337,38 @@ class WhamAnalyzer: ObservableObject {
     }
 
     // MARK: - Camera motion
+
+    nonisolated private func hasProjectionMetadata(
+        _ observation: MobileWhamFrameObservation
+    ) -> Bool {
+        observation.hmrCamera?.count ?? 0 >= 3
+            && observation.hmrCropBox != nil
+            && observation.sourceSize.width > 0
+            && observation.sourceSize.height > 0
+    }
+
+    nonisolated private func addProjectionMetadata(
+        from observation: MobileWhamFrameObservation,
+        to result: inout [String: Any]
+    ) {
+        guard let camera = observation.hmrCamera,
+              camera.count >= 3,
+              let cropBox = observation.hmrCropBox,
+              observation.sourceSize.width > 0,
+              observation.sourceSize.height > 0 else {
+            return
+        }
+        result["hmr_camera"] = MobileWhamArrays.floats(camera, limit: 3)
+        result["hmr_crop_center_pixels"] = [
+            Float(cropBox.midX), Float(cropBox.midY)
+        ]
+        result["hmr_crop_size_pixels"] = Float(cropBox.width)
+        result["source_image_size_pixels"] = [
+            Float(observation.sourceSize.width),
+            Float(observation.sourceSize.height)
+        ]
+        result["overlay_projection"] = "HMR2 official crop camera to full frame"
+    }
 
     nonisolated private func cameraAngularVelocity(
         gyroSamples: [GyroSample],

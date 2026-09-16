@@ -20,7 +20,13 @@ enum BodyPresentationMode: String, CaseIterable, Identifiable {
     }
 }
 
-class Skeleton3DEngine: ObservableObject {
+protocol BodyPresentationControlling: ObservableObject {
+    var presentationMode: BodyPresentationMode { get }
+    var meshAvailable: Bool { get }
+    func setPresentationMode(_ requestedMode: BodyPresentationMode)
+}
+
+class Skeleton3DEngine: ObservableObject, BodyPresentationControlling {
     let scene = SCNScene()
     let cameraNode = SCNNode()
 

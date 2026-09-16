@@ -220,9 +220,19 @@ falls back to the skeleton rather than invalidating the analysis.
 
 This work changes presentation only; it does not change the evaluated model or
 the accuracy numbers above. Rendering time is also not included in the existing
-187.13 ms/frame inference workload. Finally, the video view places world-space
-geometry over the player but is not a calibrated pixel projection because the
-offline result does not retain camera intrinsics.
+187.13 ms/frame inference workload.
+
+The video overlay now retains four values that the first viewer discarded:
+HMR2-S's per-frame weak-perspective camera, the square person crop, the upright
+source resolution, and each result's actual presentation timestamp. At
+playback, it reverses WHAM's refined body-to-world transform, applies HMR2's
+official crop-camera-to-full-frame conversion with the checkpoint's 5,000-pixel
+focal-length convention, and maps the projected vertices into the player's
+aspect-fit video rectangle. A custom non-opaque `SCNView` composites that mesh
+over the visible video; the free-camera 3D tab continues to display world-space
+geometry unchanged. Analyses created before this metadata was retained require
+one new analysis pass. This is model-camera alignment, not a claim that the
+estimated camera or body is exact ground truth.
 
 ## Physical iPhone workload and latency
 
@@ -332,7 +342,7 @@ throughput and a 59–66% increase in the three spatial errors versus released
 WHAM's official-input reference.
 
 The next engineering task is to measure SceneKit playback frame time, energy,
-and cache pressure separately from model inference, then add calibrated camera
-projection if video-aligned compositing is required. The next scientific task
-is longer on-device latency sampling and synchronized camera/gyro trajectory
-evaluation—not another round of uncontrolled encoder retraining.
+and cache pressure separately from model inference. The next scientific tasks
+are to quantify pixel-registration error on held-out video, collect longer
+on-device latency samples, and evaluate synchronized camera/gyro trajectory
+accuracy—not run another round of uncontrolled encoder retraining.

@@ -4,13 +4,26 @@
 //
 
 import SceneKit
+import Combine
+
+enum BodyPresentationMode: String, CaseIterable, Identifiable {
+    case mesh = "Mesh"
+    case skeleton = "Skeleton"
+
+    var id: Self { self }
+}
 
 class Skeleton3DEngine: ObservableObject {
     let scene = SCNScene()
     let cameraNode = SCNNode()
 
+    @Published private(set) var presentationMode: BodyPresentationMode
+    var meshAvailable: Bool { topology != nil }
+
     private var jointNodes: [SCNNode] = []
     private var boneNodes: [SCNNode] = []
+    private let meshNode = SCNNode()
+    private let topology: SMPLTopology?
 
     private let boneConnections: [(Int, Int)] = [
         // Face/Head
@@ -40,7 +53,9 @@ class Skeleton3DEngine: ObservableObject {
         (12, 14), (14, 16)    // R_Hip to R_Knee to R_Ankle
     ]
 
-    init() {
+    init(topology: SMPLTopology? = SMPLTopology.loadFromBundle()) {
+        self.topology = topology
+        self.presentationMode = topology == nil ? .skeleton : .mesh
         setupScene()
     }
 
@@ -57,6 +72,9 @@ class Skeleton3DEngine: ObservableObject {
         lightNode.position = SCNVector3(0, 5, 5)
         scene.rootNode.addChildNode(lightNode)
 
+        meshNode.name = "WHAM SMPL mesh"
+        scene.rootNode.addChildNode(meshNode)
+
         for _ in 0..<17 {
             let sphere = SCNSphere(radius: 0.03)
             sphere.firstMaterial?.diffuse.contents = UIColor.green
@@ -72,9 +90,18 @@ class Skeleton3DEngine: ObservableObject {
             boneNodes.append(node)
             scene.rootNode.addChildNode(node)
         }
+
+        updateVisibility()
     }
 
     func applyFrameData(keypoints3D: [Float]) {
+        applyFrameData(keypoints3D: keypoints3D, meshVertices: nil)
+    }
+
+    func applyFrameData(
+        keypoints3D: [Float],
+        meshVertices: [SIMD3<Float>]?
+    ) {
         guard keypoints3D.count == 51 else { return }
 
         SCNTransaction.begin()
@@ -122,5 +149,32 @@ class Skeleton3DEngine: ObservableObject {
         }
 
         SCNTransaction.commit()
+
+        guard presentationMode == .mesh else { return }
+        guard let topology,
+              let meshVertices,
+              let geometry = SMPLMeshGeometry.make(
+                vertices: meshVertices,
+                topology: topology
+              ) else {
+            setPresentationMode(.skeleton)
+            return
+        }
+        meshNode.geometry = geometry
+        updateVisibility()
+    }
+
+    func setPresentationMode(_ requestedMode: BodyPresentationMode) {
+        presentationMode = requestedMode == .mesh && !meshAvailable
+            ? .skeleton
+            : requestedMode
+        updateVisibility()
+    }
+
+    private func updateVisibility() {
+        let showMesh = presentationMode == .mesh && meshAvailable
+        meshNode.isHidden = !showMesh
+        jointNodes.forEach { $0.isHidden = showMesh }
+        boneNodes.forEach { $0.isHidden = showMesh }
     }
 }

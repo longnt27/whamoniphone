@@ -150,6 +150,30 @@ struct WhamAppTests {
         }
     }
 
+    @Test func smplMeshGeometryComputesSmoothVertexNormals() {
+        let vertices = [
+            SIMD3<Float>(0, 0, 0),
+            SIMD3<Float>(1, 0, 0),
+            SIMD3<Float>(0, 1, 0),
+        ]
+
+        let normals = SMPLMeshGeometry.vertexNormals(
+            vertices: vertices,
+            faces: [0, 1, 2]
+        )
+
+        #expect(normals == Array(repeating: SIMD3<Float>(0, 0, 1), count: 3))
+    }
+
+    @Test func sceneEngineFallsBackWhenMeshTopologyIsUnavailable() {
+        let engine = Skeleton3DEngine(topology: nil)
+
+        #expect(engine.meshAvailable == false)
+        #expect(engine.presentationMode == .skeleton)
+        engine.setPresentationMode(.mesh)
+        #expect(engine.presentationMode == .skeleton)
+    }
+
     @Test func selectedMobilePipelineCatalogIsLocked() {
         #expect(MobileWhamModelCatalog.resourceNames == [
             "yolo26m-pose",

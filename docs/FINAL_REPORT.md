@@ -49,6 +49,10 @@ The selected mobile pipeline is:
 6. **WHAM_WorldStep** performs SMPL forward and contact-aware trajectory
    refinement with explicit one-frame state. It emits world-space joints and
    all 6,890 SMPL vertices.
+7. **The SMPL viewer** streams those vertices into a versioned Float16 sidecar
+   and combines them with the fixed 13,776-triangle topology at playback. A
+   shaded blue SceneKit surface is the default when both files are available;
+   the 17-joint skeleton remains a selectable and backward-compatible fallback.
 
 For recorded phone video, CoreMotion angular velocity is converted into WHAM's
 six-value relative-rotation input. This is an engineering substitute for DPVO,
@@ -196,6 +200,30 @@ See the [HMR2-S](../evaluation/results/selected/hmr2s_coreml_export_report.json)
 and [world-step](../evaluation/results/selected/wham_world_step_export_report.json)
 conversion reports.
 
+## On-device SMPL rendering
+
+The offline analyzer no longer discards `WHAM_WorldStep.vertices_world`. It
+writes one aligned 6,890-vertex frame to a memory-mappable `.whammesh` sidecar
+for every JSON frame. Frame zero duplicates the first recurrent result in both
+files, preserving the existing warm-start convention without an index offset.
+Coordinates are stored as little-endian Float16 values: 41,340 bytes per frame,
+or approximately 74 MB per minute at 30 fps. Keeping vertices out of JSON avoids
+large parse-time allocations and leaves legacy result files readable.
+
+The fixed 13,776-face SMPL topology is extracted from the user's licensed HMR
+checkpoint into an 82,680-byte `SMPLFaces.bin` resource. That generated file is
+ignored by Git. The tracked extractor validates tensor shape and every vertex
+index before writing it. At playback, the app validates both binary formats,
+decodes only the requested frame, computes smooth vertex normals, and builds a
+double-sided blue SceneKit surface. Missing or corrupt topology/cache data
+falls back to the skeleton rather than invalidating the analysis.
+
+This work changes presentation only; it does not change the evaluated model or
+the accuracy numbers above. Rendering time is also not included in the existing
+187.13 ms/frame inference workload. Finally, the video view places world-space
+geometry over the player but is not a calibrated pixel projection because the
+offline result does not retain camera intrinsics.
+
 ## Physical iPhone workload and latency
 
 ### Protocol
@@ -289,9 +317,10 @@ only possible memory schedule.
 - Model packages are generated and ignored rather than committed. Reproduction
   requires the pinned public checkpoints plus licensed SMPL assets under their
   original terms.
-- `WHAM_WorldStep` already computes the 6,890-vertex SMPL body, but the current
-  app viewer still renders the 17-joint skeleton. A filled mesh renderer is a
-  follow-up presentation feature, not missing model inference.
+- The mesh topology resource is also generated and ignored. A clone without it
+  still builds and uses the skeleton fallback.
+- Mesh playback consumes about 74 MB of cache storage per minute at 30 fps and
+  has not yet received a separate rendering-energy or frame-time benchmark.
 
 ## Conclusion and next experiment
 
@@ -302,10 +331,8 @@ locked accuracy-versus-latency report. The cost is roughly 5.34 fps typical
 throughput and a 59–66% increase in the three spatial errors versus released
 WHAM's official-input reference.
 
-The next engineering task is the SMPL mesh viewer. It should reuse the vertices
-already emitted by `WHAM_WorldStep`, bundle the fixed SMPL face topology, cache
-frame results in a compact binary format rather than large JSON arrays, update
-a SceneKit or Metal vertex buffer, and benchmark rendering separately from
-model inference. The next scientific task is longer on-device latency sampling
-and synchronized camera/gyro trajectory evaluation—not another round of
-uncontrolled encoder retraining.
+The next engineering task is to measure SceneKit playback frame time, energy,
+and cache pressure separately from model inference, then add calibrated camera
+projection if video-aligned compositing is required. The next scientific task
+is longer on-device latency sampling and synchronized camera/gyro trajectory
+evaluation—not another round of uncontrolled encoder retraining.

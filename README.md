@@ -58,6 +58,7 @@ Requirements:
 - iOS 18.5 or newer
 - a physical iPhone for meaningful Core ML/thermal measurements
 - the seven generated Core ML packages listed below
+- a licensed HMR/HMR2 checkpoint from which to extract SMPL face topology
 
 Place these directories in `WhamApp/WhamApp`:
 
@@ -68,6 +69,15 @@ Place these directories in `WhamApp/WhamApp`:
 - `WHAM_I.mlpackage`
 - `WHAM_ImageStep.mlpackage`
 - `WHAM_WorldStep.mlpackage`
+
+Generate the fixed SMPL topology from your licensed checkpoint. The resulting
+82,680-byte resource is intentionally ignored by Git:
+
+```bash
+python3 tools/export/export_smpl_topology.py \
+  --checkpoint /path/to/licensed_hmr_checkpoint.ckpt \
+  --output WhamApp/WhamApp/SMPLFaces.bin
+```
 
 The packages are intentionally ignored because they are large and recoverable;
 the exporter scripts and conversion reports are tracked. Open
@@ -82,7 +92,9 @@ xcodebuild -project WhamApp/WhamApp.xcodeproj \
 
 In the app:
 
-- the normal offline flow selects a video and its recorded gyro JSON; and
+- the normal offline flow selects a video and its recorded gyro JSON, writes a
+  lightweight JSON result plus a Float16 `.whammesh` sidecar, and opens the
+  shaded blue body in either **Mesh** or **Skeleton** mode; and
 - the **Benchmark** tab runs the deterministic 5 × 8-frame workload and exports
   `selected_mobile_pipeline_device_benchmark.json`.
 
@@ -139,9 +151,12 @@ selected network.
   truth.
 - The five-pass phone workload is enough for a smoke-test median, not a stable
   tail-latency claim.
-- `WHAM_WorldStep` already computes the full SMPL body, but the current viewer
-  draws a 17-joint skeleton. The next UI task is a filled mesh renderer that
-  reuses those vertices and benchmarks rendering separately.
+- The filled SceneKit viewer renders the full 6,890-vertex SMPL body, but the
+  existing phone benchmark measures inference rather than rendering cost.
+- A `.whammesh` cache costs about 41 KB per frame, or 74 MB per minute at
+  30 fps. JSON-only legacy results still open with the skeleton fallback.
+- The video tab visualizes world-space output over the player; it is not a
+  calibrated pixel overlay because camera intrinsics are not retained.
 
 ## Attribution
 

@@ -86,7 +86,7 @@ struct MainCameraView: View {
                             .foregroundColor(.white)
                     }
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 108)
             }
         }
         .sheet(isPresented: $isShowingLibrary, onDismiss: { manager.resume() }) {

@@ -37,6 +37,8 @@ private struct AppRootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             PersistentAppTabBar(selection: $selection)
+                .padding(.horizontal, 22)
+                .padding(.bottom, 8)
         }
     }
 }
@@ -57,12 +59,14 @@ private struct PersistentAppTabBar: View {
                 tab: .benchmark
             )
         }
-        .padding(.top, 9)
-        .padding(.bottom, 4)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .top) {
-            Divider().opacity(0.55)
+        .padding(6)
+        .frame(maxWidth: 370)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay {
+            Capsule()
+                .stroke(Color.white.opacity(0.16), lineWidth: 0.75)
         }
+        .shadow(color: .black.opacity(0.34), radius: 14, y: 6)
     }
 
     private func tabButton(
@@ -73,14 +77,22 @@ private struct PersistentAppTabBar: View {
         Button {
             selection = tab
         } label: {
-            VStack(spacing: 3) {
+            HStack(spacing: 7) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 21, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                 Text(title)
-                    .font(.caption2.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
             }
-            .foregroundStyle(selection == tab ? Color.blue : Color.white)
+            .foregroundStyle(
+                selection == tab ? Color.white : Color.white.opacity(0.76)
+            )
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
+            .background {
+                if selection == tab {
+                    Capsule().fill(Color.blue)
+                }
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

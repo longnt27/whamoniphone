@@ -102,6 +102,52 @@ struct WhamAppTests {
         #expect(VideoOverlayTimeline.frameIndex(at: 9.00, timestamps: timestamps) == 3)
     }
 
+    @Test func videoOverlayEngineBuildsAVisibleProjectedMesh() throws {
+        let topology = try SMPLTopology(
+            data: Data([
+                83, 77, 80, 76, 70, 65, 67, 69,
+                1, 0, 0, 0,
+                3, 0, 0, 0,
+                1, 0, 0, 0,
+                3, 0, 0, 0,
+                0, 0, 1, 0, 2, 0,
+            ]),
+            expectedVertexCount: 3,
+            expectedTriangleCount: 1
+        )
+        let engine = VideoOverlayEngine(topology: topology)
+        let metadata = VideoOverlayMetadata(
+            camera: SIMD3<Float>(2, 0, 0),
+            cropCenter: CGPoint(x: 320, y: 240),
+            cropSize: 320,
+            sourceSize: CGSize(width: 640, height: 480),
+            poseRoot6D: [1, 0, 0, 0, 1, 0],
+            refinedRoot6D: [1, 0, 0, 0, 1, 0],
+            worldTranslation: .zero
+        )
+
+        engine.applyFrameData(
+            keypointsWorld: Array(repeating: 0, count: 51),
+            meshVerticesWorld: [
+                SIMD3<Float>(-0.1, -0.1, 0),
+                SIMD3<Float>(0.1, -0.1, 0),
+                SIMD3<Float>(0, 0.1, 0),
+            ],
+            metadata: metadata,
+            viewportSize: CGSize(width: 320, height: 240)
+        )
+
+        let meshNode = try #require(
+            engine.scene.rootNode.childNode(
+                withName: "WHAM camera-aligned SMPL mesh",
+                recursively: true
+            )
+        )
+        #expect(engine.presentationMode == .mesh)
+        #expect(meshNode.geometry != nil)
+        #expect(meshNode.isHidden == false)
+    }
+
     @Test func smplMeshCacheRoundTripsFloat16Frames() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

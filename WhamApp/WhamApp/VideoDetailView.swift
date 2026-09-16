@@ -12,6 +12,7 @@ struct VideoDetailView: View {
     @StateObject private var analyzer = WhamAnalyzer()
 
     @State private var isAnalyzedLocal: Bool
+    @State private var analysisRevision = 0
 
     init(video: VideoModel) {
         self.video = video
@@ -24,7 +25,11 @@ struct VideoDetailView: View {
                 ProcessingView(analyzer: analyzer)
 
             } else if isAnalyzedLocal {
-                AnalyzedTabView(video: video)
+                AnalyzedTabView(
+                    video: video,
+                    onReanalyze: runAnalysis
+                )
+                .id(analysisRevision)
 
             } else {
                 NotAnalyzedView(video: video, analyzer: analyzer) {
@@ -34,6 +39,22 @@ struct VideoDetailView: View {
         }
         .navigationTitle(video.url.lastPathComponent)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func runAnalysis() {
+        Task {
+            await analyzer.analyze(
+                videoURL: video.url,
+                gyroJsonURL: video.gyroJsonURL,
+                outputURL: video.whamOutputURL
+            )
+            guard !analyzer.statusMessage.contains("Lỗi"),
+                  !analyzer.statusMessage.contains("Failed") else {
+                return
+            }
+            isAnalyzedLocal = true
+            analysisRevision += 1
+        }
     }
 }
 
@@ -144,6 +165,7 @@ struct NotAnalyzedView: View {
 // MARK: - The Tab Router
 struct AnalyzedTabView: View {
     let video: VideoModel
+    let onReanalyze: () -> Void
     @State private var whamData: [[String: Any]] = []
     @State private var meshReader: SMPLMeshCache.Reader?
     @State private var meshStatus = "Legacy result: no SMPL mesh cache"
@@ -155,7 +177,8 @@ struct AnalyzedTabView: View {
                 videoURL: video.url,
                 whamData: whamData,
                 meshReader: meshReader,
-                meshStatus: meshStatus
+                meshStatus: meshStatus,
+                onReanalyze: onReanalyze
             )
                 .tabItem {
                     Image(systemName: "play.tv.fill")
@@ -236,12 +259,14 @@ struct VideoOverlayView: View {
     let whamData: [[String: Any]]
     let meshReader: SMPLMeshCache.Reader?
     let meshStatus: String
+    let onReanalyze: () -> Void
 
     @StateObject private var engine = VideoOverlayEngine()
     @State private var player: AVPlayer
     @State private var lastRenderedFrame = -1
     @State private var timestamps: [Double] = []
     @State private var viewportSize: CGSize = .zero
+    @State private var videoAspectRatio: CGFloat = 16 / 9
 
     let timer = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
@@ -249,65 +274,109 @@ struct VideoOverlayView: View {
         videoURL: URL,
         whamData: [[String: Any]],
         meshReader: SMPLMeshCache.Reader?,
-        meshStatus: String
+        meshStatus: String,
+        onReanalyze: @escaping () -> Void
     ) {
         self.videoURL = videoURL
         self.whamData = whamData
         self.meshReader = meshReader
         self.meshStatus = meshStatus
+        self.onReanalyze = onReanalyze
         _player = State(initialValue: AVPlayer(url: videoURL))
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .top) {
+        VStack(spacing: 16) {
+            ZStack {
                 VideoPlayer(player: player)
+                    .background(Color.black)
 
-                TransparentSceneView(
-                    scene: engine.scene,
-                    pointOfView: engine.cameraNode
-                )
-                .allowsHitTesting(false)
-
-                VStack(spacing: 6) {
-                    BodyPresentationPicker(
-                        engine: engine,
-                        meshCacheAvailable: meshReader != nil,
-                        onChange: refreshCurrentFrame
+                if projectionMetadataAvailable {
+                    TransparentSceneView(
+                        scene: engine.scene,
+                        pointOfView: engine.cameraNode
                     )
-                    if !projectionMetadataAvailable {
-                        Text("Re-analyze this video once to generate a camera-aligned overlay")
-                            .font(.caption2)
-                            .foregroundStyle(.white)
-                            .lineLimit(2)
-                    } else if engine.presentationMode == .skeleton && meshReader == nil {
-                        Text(meshStatus)
-                            .font(.caption2)
-                            .foregroundStyle(.white)
-                            .lineLimit(2)
-                    } else if engine.presentationMode == .skeleton && !engine.meshAvailable {
-                        Text("Generate and bundle SMPLFaces.bin to enable mesh rendering")
-                            .font(.caption2)
-                            .foregroundStyle(.white)
-                            .lineLimit(2)
+                    .allowsHitTesting(false)
+                }
+            }
+            .aspectRatio(videoAspectRatio, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay {
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(.white.opacity(0.12), lineWidth: 1)
+            }
+            .background {
+                GeometryReader { geometry in
+                    Color.clear
+                        .onAppear {
+                            updateViewport(geometry.size)
+                        }
+                        .onChange(of: geometry.size) {
+                            updateViewport(geometry.size)
+                        }
+                }
+            }
+
+            Group {
+                if projectionMetadataAvailable {
+                    VStack(spacing: 10) {
+                        Text("CAMERA-ALIGNED BODY")
+                            .font(.system(.caption2, design: .monospaced).weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        BodyPresentationPicker(
+                            engine: engine,
+                            meshCacheAvailable: meshReader != nil,
+                            onChange: refreshCurrentFrame
+                        )
+                        if engine.presentationMode == .skeleton && meshReader == nil {
+                            Text(meshStatus)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        } else if engine.presentationMode == .skeleton && !engine.meshAvailable {
+                            Text("SMPL topology is not bundled; showing the skeleton")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                } else {
+                    VStack(spacing: 12) {
+                        Label("Aligned mesh not generated yet", systemImage: "figure.arms.open")
+                            .font(.headline)
+
+                        Text("This result was created by the older viewer. Re-run the saved video to add camera projection and display the SMPL mesh.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+
+                        Button(action: onReanalyze) {
+                            Label("Generate aligned mesh", systemImage: "arrow.triangle.2.circlepath")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 11)
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
                 }
-                .padding(10)
-                .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
-                .padding(.top, 8)
             }
-            .onAppear {
-                viewportSize = geometry.size
-                synchronizeTimeline()
-                selectDefaultPresentation()
-                refreshCurrentFrame()
-            }
-            .onChange(of: geometry.size) {
-                viewportSize = geometry.size
-                refreshCurrentFrame()
-            }
+            .padding(14)
+            .frame(maxWidth: .infinity)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+
+            Spacer(minLength: 0)
         }
-        .ignoresSafeArea()
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .background(Color(uiColor: .systemBackground))
+        .onAppear {
+            synchronizeTimeline()
+            selectDefaultPresentation()
+            refreshCurrentFrame()
+            loadVideoAspectRatio()
+        }
         .onChange(of: whamData.count) {
             synchronizeTimeline()
             refreshCurrentFrame()
@@ -360,6 +429,37 @@ struct VideoOverlayView: View {
             }
             return Double(index) / 30
         }
+        if let metadata = whamData.lazy.compactMap({
+            VideoOverlayMetadata(dictionary: $0)
+        }).first {
+            videoAspectRatio = metadata.sourceSize.width / metadata.sourceSize.height
+        }
+    }
+
+    private func loadVideoAspectRatio() {
+        Task {
+            let asset = AVURLAsset(url: videoURL)
+            guard let track = try? await asset.loadTracks(
+                withMediaType: .video
+            ).first,
+                  let naturalSize = try? await track.load(.naturalSize),
+                  let transform = try? await track.load(.preferredTransform) else {
+                return
+            }
+            let oriented = naturalSize.applying(transform)
+            let width = abs(oriented.width)
+            let height = abs(oriented.height)
+            guard width > 0, height > 0 else { return }
+            await MainActor.run {
+                videoAspectRatio = width / height
+            }
+        }
+    }
+
+    private func updateViewport(_ size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        viewportSize = size
+        refreshCurrentFrame()
     }
 
     private func updateBody(frameIndex: Int) {

@@ -7,9 +7,100 @@
 
 import Testing
 import CoreML
+import Foundation
 @testable import WhamApp
 
 struct WhamAppTests {
+
+    @Test func smplMeshCacheRoundTripsFloat16Frames() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("fixture.whammesh")
+
+        let writer = try SMPLMeshCache.Writer(outputURL: url, vertexCount: 3)
+        try writer.append([
+            SIMD3<Float>(1.25, -2.5, 3.75),
+            SIMD3<Float>(4.5, 5.25, -6.0),
+            SIMD3<Float>(-7.5, 8.0, 9.5),
+        ])
+        try writer.append([
+            SIMD3<Float>(0.125, 0.25, 0.5),
+            SIMD3<Float>(1.0, 2.0, 4.0),
+            SIMD3<Float>(8.0, 16.0, 32.0),
+        ])
+        try writer.finalize()
+
+        let reader = try SMPLMeshCache.Reader(url: url, expectedVertexCount: 3)
+        #expect(reader.vertexCount == 3)
+        #expect(reader.frameCount == 2)
+        let first = try reader.frame(at: 0)
+        let second = try reader.frame(at: 1)
+        #expect(first[0] == SIMD3<Float>(1.25, -2.5, 3.75))
+        #expect(first[2] == SIMD3<Float>(-7.5, 8.0, 9.5))
+        #expect(second[0] == SIMD3<Float>(0.125, 0.25, 0.5))
+        #expect(second[2] == SIMD3<Float>(8.0, 16.0, 32.0))
+    }
+
+    @Test func smplMeshCacheDerivesSiblingURL() {
+        let json = URL(fileURLWithPath: "/tmp/walk_wham_output.json")
+        #expect(
+            SMPLMeshCache.outputURL(forJSONURL: json).path
+                == "/tmp/walk_wham_output.whammesh"
+        )
+    }
+
+    @Test func smplMeshCacheRejectsUnexpectedVertexCount() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("fixture.whammesh")
+        let writer = try SMPLMeshCache.Writer(outputURL: url, vertexCount: 3)
+        try writer.append(Array(repeating: SIMD3<Float>(0, 0, 0), count: 3))
+        try writer.finalize()
+
+        #expect(throws: SMPLMeshCache.CacheError.self) {
+            try SMPLMeshCache.Reader(url: url, expectedVertexCount: 4)
+        }
+    }
+
+    @Test func smplMeshCacheRejectsMalformedAndOutOfRangeData() throws {
+        #expect(throws: SMPLMeshCache.CacheError.self) {
+            try SMPLMeshCache.Reader(
+                data: Data(repeating: 0, count: 24),
+                expectedVertexCount: 3
+            )
+        }
+
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("fixture.whammesh")
+        let writer = try SMPLMeshCache.Writer(outputURL: url, vertexCount: 3)
+        try writer.append(Array(repeating: SIMD3<Float>(1, 2, 3), count: 3))
+        try writer.finalize()
+
+        #expect(throws: SMPLMeshCache.CacheError.self) {
+            try SMPLMeshCache.Reader(url: url, expectedVertexCount: 3).frame(at: 1)
+        }
+        var truncated = try Data(contentsOf: url)
+        truncated.removeLast()
+        #expect(throws: SMPLMeshCache.CacheError.self) {
+            try SMPLMeshCache.Reader(data: truncated, expectedVertexCount: 3)
+        }
+    }
 
     @Test func selectedMobilePipelineCatalogIsLocked() {
         #expect(MobileWhamModelCatalog.resourceNames == [

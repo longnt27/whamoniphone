@@ -1,4 +1,5 @@
 *.mlpackage
+WhamApp/WhamApp/SMPLFaces.bin
 *.DS_Store
 __pycache__/
 *.py[cod]

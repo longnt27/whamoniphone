@@ -102,6 +102,54 @@ struct WhamAppTests {
         }
     }
 
+    @Test func smplTopologyDecodesValidatedTriangleIndices() throws {
+        let data = Data([
+            83, 77, 80, 76, 70, 65, 67, 69, // SMPLFACE
+            1, 0, 0, 0,                     // version
+            3, 0, 0, 0,                     // vertices
+            1, 0, 0, 0,                     // triangles
+            3, 0, 0, 0,                     // indices per triangle
+            0, 0, 1, 0, 2, 0,               // one UInt16 triangle
+        ])
+
+        let topology = try SMPLTopology(
+            data: data,
+            expectedVertexCount: 3,
+            expectedTriangleCount: 1
+        )
+
+        #expect(topology.vertexCount == 3)
+        #expect(topology.triangleCount == 1)
+        #expect(topology.indices == [0, 1, 2])
+    }
+
+    @Test func smplTopologyRejectsBadMagicAndOutOfRangeIndices() {
+        let badMagic = Data(repeating: 0, count: 30)
+        #expect(throws: SMPLTopology.TopologyError.self) {
+            try SMPLTopology(
+                data: badMagic,
+                expectedVertexCount: 3,
+                expectedTriangleCount: 1
+            )
+        }
+
+        let invalidIndex = Data([
+            83, 77, 80, 76, 70, 65, 67, 69,
+            1, 0, 0, 0,
+            3, 0, 0, 0,
+            1, 0, 0, 0,
+            3, 0, 0, 0,
+            0, 0, 1, 0, 3, 0,
+        ])
+        #expect(throws: SMPLTopology.TopologyError.self) {
+            try SMPLTopology(
+                data: invalidIndex,
+                expectedVertexCount: 3,
+                expectedTriangleCount: 1
+            )
+        }
+    }
+
     @Test func selectedMobilePipelineCatalogIsLocked() {
         #expect(MobileWhamModelCatalog.resourceNames == [
             "yolo26m-pose",

@@ -287,18 +287,12 @@ struct VideoOverlayView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            ZStack {
-                VideoPlayer(player: player)
-                    .background(Color.black)
-
-                if projectionMetadataAvailable {
-                    TransparentSceneView(
-                        scene: engine.scene,
-                        pointOfView: engine.cameraNode
-                    )
-                    .allowsHitTesting(false)
-                }
-            }
+            VideoOverlayPlayerView(
+                player: player,
+                scene: engine.scene,
+                pointOfView: engine.cameraNode
+            )
+            .background(Color.black)
             .aspectRatio(videoAspectRatio, contentMode: .fit)
             .frame(maxWidth: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 14))

@@ -12,6 +12,7 @@ import SwiftUI
 
 class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
     static let recordingFramesPerSecond = 30
+    static let targetRecordingResolution = CGSize(width: 1920, height: 1440)
 
     @Published var isRecording = false
     @Published var recordedSeconds: Int = 0
@@ -32,7 +33,7 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
     private var sensorData: [[String: Any]] = []
     private var currentID: UUID?
     private var timer: Timer?
-    private var recordingResolution = CGSize(width: 1920, height: 1440)
+    private var recordingResolution = ARWhamManager.targetRecordingResolution
     private var lastRecordedFrameTimestamp: TimeInterval?
 
     // --- AVFoundation Core ---
@@ -56,12 +57,9 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
     func resetTracking() {
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = [.horizontal]
-        if let format = ARWorldTrackingConfiguration.supportedVideoFormats
-            .filter({ $0.framesPerSecond == Self.recordingFramesPerSecond })
-            .max(by: {
-                $0.imageResolution.width * $0.imageResolution.height
-                    < $1.imageResolution.width * $1.imageResolution.height
-            }) {
+        if let format = Self.preferredRecordingFormat(
+            from: ARWorldTrackingConfiguration.supportedVideoFormats
+        ) {
             config.videoFormat = format
             recordingResolution = format.imageResolution
         }
@@ -250,5 +248,22 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
 
     func getURL(id: UUID, ext: String) -> URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(id.uuidString).\(ext)")
+    }
+
+    private static func preferredRecordingFormat(
+        from formats: [ARConfiguration.VideoFormat]
+    ) -> ARConfiguration.VideoFormat? {
+        let thirtyFPSFormats = formats.filter {
+            $0.framesPerSecond == recordingFramesPerSecond
+        }
+        return thirtyFPSFormats.min { first, second in
+            resolutionDistance(first.imageResolution)
+                < resolutionDistance(second.imageResolution)
+        }
+    }
+
+    private static func resolutionDistance(_ resolution: CGSize) -> CGFloat {
+        abs(resolution.width - targetRecordingResolution.width)
+            + abs(resolution.height - targetRecordingResolution.height)
     }
 }

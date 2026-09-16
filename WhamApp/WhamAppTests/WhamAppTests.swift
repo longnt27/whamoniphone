@@ -111,6 +111,25 @@ struct WhamAppTests {
         #expect(view.isOpaque == false)
         #expect(view.backgroundColor?.cgColor.alpha == 0)
         #expect(view.scene?.background.contents as? UIColor == UIColor.clear)
+        #expect(view.rendersContinuously)
+        #expect(view.preferredFramesPerSecond == 30)
+    }
+
+    @Test @MainActor func videoOverlayStaysAboveTheVideoPlayerLayer() {
+        let controller = VideoOverlayPlayerViewController()
+        controller.loadViewIfNeeded()
+
+        let playerIndex = controller.view.subviews.firstIndex(
+            of: controller.playerController.view
+        )
+        let overlayIndex = controller.view.subviews.firstIndex(
+            of: controller.overlayView
+        )
+
+        #expect(playerIndex != nil)
+        #expect(overlayIndex != nil)
+        #expect(overlayIndex! > playerIndex!)
+        #expect(controller.overlayView.isUserInteractionEnabled == false)
     }
 
     @Test func videoOverlaySelectsFramesByRecordedTimestamp() {

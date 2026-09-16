@@ -105,6 +105,59 @@ struct WhamAppTests {
         #expect(mapped[0].z == -8)
     }
 
+    @Test func videoOverlayRegistrationRecoversYOLOCameraAlignment() throws {
+        var projected: [SIMD3<Float>] = []
+        var observed: [SIMD2<Float>] = []
+        let expectedScale: Float = 1.1
+        let expectedTranslation = SIMD2<Float>(20, -30)
+        for index in 0..<17 {
+            let point = SIMD3<Float>(
+                Float(80 + index * 17),
+                Float(60 + (index % 5) * 31),
+                4
+            )
+            projected.append(point)
+            observed.append(
+                SIMD2<Float>(point.x, point.y) * expectedScale
+                    + expectedTranslation
+            )
+        }
+        observed[16] += SIMD2<Float>(220, -180)
+        let detector = VideoOverlayDetectorAnchors(
+            points: observed,
+            valid: Array(repeating: true, count: 17)
+        )
+
+        let fitted = try #require(VideoOverlayRegistration.fit(
+            projectedSourcePixels: projected,
+            detector: detector,
+            sourceSize: CGSize(width: 640, height: 480)
+        ))
+
+        #expect(abs(fitted.scale - expectedScale) < 0.001)
+        #expect(simd_distance(fitted.translation, expectedTranslation) < 0.001)
+    }
+
+    @Test func videoOverlayRegistrationNeedsFourConfidentBodyAnchors() {
+        let projected = (0..<17).map {
+            SIMD3<Float>(Float($0 * 10), Float($0 * 5), 1)
+        }
+        var valid = Array(repeating: false, count: 17)
+        valid[5] = true
+        valid[6] = true
+        valid[11] = true
+        let detector = VideoOverlayDetectorAnchors(
+            points: projected.map { SIMD2<Float>($0.x, $0.y) },
+            valid: valid
+        )
+
+        #expect(VideoOverlayRegistration.fit(
+            projectedSourcePixels: projected,
+            detector: detector,
+            sourceSize: CGSize(width: 640, height: 480)
+        ) == nil)
+    }
+
     @Test @MainActor func videoOverlaySceneViewIsActuallyTransparent() {
         let view = VideoOverlaySceneView(frame: .zero)
 

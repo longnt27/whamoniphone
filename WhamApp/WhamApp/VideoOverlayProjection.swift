@@ -118,6 +118,176 @@ struct VideoOverlayMetadata {
     }
 }
 
+struct VideoOverlayDetectorAnchors {
+    let points: [SIMD2<Float>]
+    let valid: [Bool]
+
+    init?(dictionary: [String: Any]) {
+        guard let coordinates = Self.floatArray(
+            dictionary["detector_keypoints_pixels"]
+        ),
+              coordinates.count >= 34,
+              let validity = Self.integerArray(
+                dictionary["detector_keypoints_valid"]
+              ),
+              validity.count >= 17 else {
+            return nil
+        }
+        points = (0..<17).map {
+            SIMD2<Float>(coordinates[$0 * 2], coordinates[$0 * 2 + 1])
+        }
+        valid = validity.prefix(17).map { $0 != 0 }
+    }
+
+    init(points: [SIMD2<Float>], valid: [Bool]) {
+        self.points = points
+        self.valid = valid
+    }
+
+    private static func floatArray(_ value: Any?) -> [Float]? {
+        if let values = value as? [Float] { return values }
+        if let values = value as? [Double] { return values.map(Float.init) }
+        if let values = value as? [NSNumber] {
+            return values.map(\.floatValue)
+        }
+        return nil
+    }
+
+    private static func integerArray(_ value: Any?) -> [Int]? {
+        if let values = value as? [Int] { return values }
+        if let values = value as? [NSNumber] {
+            return values.map(\.intValue)
+        }
+        return nil
+    }
+}
+
+struct VideoOverlayRegistration: Equatable {
+    static let identity = VideoOverlayRegistration(
+        scale: 1,
+        translation: .zero
+    )
+    static let bodyAnchorIndices = Array(5...16)
+
+    let scale: Float
+    let translation: SIMD2<Float>
+
+    static func fit(
+        projectedSourcePixels: [SIMD3<Float>],
+        detector: VideoOverlayDetectorAnchors,
+        sourceSize: CGSize
+    ) -> VideoOverlayRegistration? {
+        let pairs = bodyAnchorIndices.compactMap { index -> AnchorPair? in
+            guard index < projectedSourcePixels.count,
+                  index < detector.points.count,
+                  index < detector.valid.count,
+                  detector.valid[index] else {
+                return nil
+            }
+            let projected = SIMD2<Float>(
+                projectedSourcePixels[index].x,
+                projectedSourcePixels[index].y
+            )
+            let observed = detector.points[index]
+            guard projected.x.isFinite,
+                  projected.y.isFinite,
+                  observed.x.isFinite,
+                  observed.y.isFinite else {
+                return nil
+            }
+            return AnchorPair(projected: projected, observed: observed)
+        }
+        guard pairs.count >= 4,
+              let initial = leastSquaresFit(pairs, sourceSize: sourceSize) else {
+            return nil
+        }
+
+        let residuals = pairs.map {
+            simd_length(initial.apply($0.projected) - $0.observed)
+        }
+        let median = residuals.sorted()[residuals.count / 2]
+        let minimumThreshold = Float(
+            max(sourceSize.width, sourceSize.height) * 0.015
+        )
+        let threshold = max(minimumThreshold, median * 2.5)
+        let inliers = zip(pairs, residuals).compactMap {
+            $0.1 <= threshold ? $0.0 : nil
+        }
+        guard inliers.count >= 4 else { return initial }
+        return leastSquaresFit(inliers, sourceSize: sourceSize) ?? initial
+    }
+
+    func applying(to points: [SIMD3<Float>]) -> [SIMD3<Float>] {
+        points.map {
+            SIMD3<Float>(
+                $0.x * scale + translation.x,
+                $0.y * scale + translation.y,
+                $0.z
+            )
+        }
+    }
+
+    func smoothed(
+        toward next: VideoOverlayRegistration,
+        response: Float = 0.25
+    ) -> VideoOverlayRegistration {
+        let amount = max(0, min(response, 1))
+        return VideoOverlayRegistration(
+            scale: scale + (next.scale - scale) * amount,
+            translation: translation + (next.translation - translation) * amount
+        )
+    }
+
+    private struct AnchorPair {
+        let projected: SIMD2<Float>
+        let observed: SIMD2<Float>
+    }
+
+    private func apply(_ point: SIMD2<Float>) -> SIMD2<Float> {
+        point * scale + translation
+    }
+
+    private static func leastSquaresFit(
+        _ pairs: [AnchorPair],
+        sourceSize: CGSize
+    ) -> VideoOverlayRegistration? {
+        guard pairs.count >= 2 else { return nil }
+        let count = Float(pairs.count)
+        let projectedCenter = pairs.reduce(SIMD2<Float>.zero) {
+            $0 + $1.projected
+        } / count
+        let observedCenter = pairs.reduce(SIMD2<Float>.zero) {
+            $0 + $1.observed
+        } / count
+        let numerator = pairs.reduce(Float.zero) { partial, pair in
+            partial + simd_dot(
+                pair.projected - projectedCenter,
+                pair.observed - observedCenter
+            )
+        }
+        let denominator = pairs.reduce(Float.zero) { partial, pair in
+            let centered = pair.projected - projectedCenter
+            return partial + simd_dot(centered, centered)
+        }
+        guard denominator > 1e-4 else { return nil }
+        let scale = max(0.75, min(numerator / denominator, 1.35))
+        let rawTranslation = observedCenter - projectedCenter * scale
+        let maximumTranslation = SIMD2<Float>(
+            Float(sourceSize.width * 0.2),
+            Float(sourceSize.height * 0.2)
+        )
+        let translation = simd_clamp(
+            rawTranslation,
+            -maximumTranslation,
+            maximumTranslation
+        )
+        return VideoOverlayRegistration(
+            scale: scale,
+            translation: translation
+        )
+    }
+}
+
 enum SMPLVideoProjector {
     // HMR2's released renderer and training projection both use this focal
     // length for the 256-pixel person crop.
@@ -149,15 +319,18 @@ enum SMPLVideoProjector {
     static func projectWorldToViewport(
         _ worldVertices: [SIMD3<Float>],
         metadata: VideoOverlayMetadata,
-        viewportSize: CGSize
+        viewportSize: CGSize,
+        registration: VideoOverlayRegistration = .identity
     ) -> [SIMD3<Float>] {
         mapSourcePixelsToViewport(
-            projectToSourcePixels(
-                cameraVertices: worldToCamera(
-                    worldVertices,
+            registration.applying(
+                to: projectToSourcePixels(
+                    cameraVertices: worldToCamera(
+                        worldVertices,
+                        metadata: metadata
+                    ),
                     metadata: metadata
-                ),
-                metadata: metadata
+                )
             ),
             sourceSize: metadata.sourceSize,
             viewportSize: viewportSize

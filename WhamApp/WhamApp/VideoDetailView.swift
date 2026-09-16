@@ -265,6 +265,7 @@ struct VideoOverlayView: View {
     @State private var player: AVPlayer
     @State private var lastRenderedFrame = -1
     @State private var timestamps: [Double] = []
+    @State private var registrations: [VideoOverlayRegistration] = []
     @State private var viewportSize: CGSize = .zero
     @State private var videoAspectRatio: CGFloat = 16 / 9
 
@@ -324,6 +325,14 @@ struct VideoOverlayView: View {
                             meshCacheAvailable: meshReader != nil,
                             onChange: refreshCurrentFrame
                         )
+                        if detectorAlignmentAvailable {
+                            Label(
+                                "YOLO camera registration active",
+                                systemImage: "scope"
+                            )
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                        }
                         if engine.presentationMode == .skeleton && meshReader == nil {
                             Text(meshStatus)
                                 .font(.caption2)
@@ -335,6 +344,17 @@ struct VideoOverlayView: View {
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
+
+                        Button(action: onReanalyze) {
+                            Label(
+                                detectorAlignmentAvailable
+                                    ? "Refresh overlay alignment"
+                                    : "Generate YOLO alignment",
+                                systemImage: "arrow.triangle.2.circlepath"
+                            )
+                            .font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
                     }
                 } else {
                     VStack(spacing: 12) {
@@ -413,6 +433,10 @@ struct VideoOverlayView: View {
         whamData.contains { VideoOverlayMetadata(dictionary: $0) != nil }
     }
 
+    private var detectorAlignmentAvailable: Bool {
+        whamData.contains { VideoOverlayDetectorAnchors(dictionary: $0) != nil }
+    }
+
     private func synchronizeTimeline() {
         timestamps = whamData.enumerated().map { index, frame in
             if let number = frame["timestamp_seconds"] as? NSNumber {
@@ -423,6 +447,7 @@ struct VideoOverlayView: View {
             }
             return Double(index) / 30
         }
+        registrations = makeRegistrations()
         if let metadata = whamData.lazy.compactMap({
             VideoOverlayMetadata(dictionary: $0)
         }).first {
@@ -473,13 +498,52 @@ struct VideoOverlayView: View {
         let vertices = engine.presentationMode == .mesh
             ? try? meshReader?.frame(at: safeIndex)
             : nil
+        let registration = safeIndex < registrations.count
+            ? registrations[safeIndex]
+            : .identity
         engine.applyFrameData(
             keypointsWorld: keypoints,
             meshVerticesWorld: vertices ?? nil,
             metadata: metadata,
-            viewportSize: viewportSize
+            viewportSize: viewportSize,
+            registration: registration
         )
         lastRenderedFrame = safeIndex
+    }
+
+    private func makeRegistrations() -> [VideoOverlayRegistration] {
+        var previous: VideoOverlayRegistration?
+        return whamData.map { frame in
+            guard let metadata = VideoOverlayMetadata(dictionary: frame),
+                  let detector = VideoOverlayDetectorAnchors(
+                    dictionary: frame
+                  ),
+                  let values = whamFloatArray(frame["keypoints_3d"]),
+                  values.count == 51 else {
+                return previous ?? .identity
+            }
+            let worldJoints = stride(from: 0, to: 51, by: 3).map {
+                SIMD3<Float>(values[$0], values[$0 + 1], values[$0 + 2])
+            }
+            let cameraJoints = SMPLVideoProjector.worldToCamera(
+                worldJoints,
+                metadata: metadata
+            )
+            let projected = SMPLVideoProjector.projectToSourcePixels(
+                cameraVertices: cameraJoints,
+                metadata: metadata
+            )
+            guard let fitted = VideoOverlayRegistration.fit(
+                projectedSourcePixels: projected,
+                detector: detector,
+                sourceSize: metadata.sourceSize
+            ) else {
+                return previous ?? .identity
+            }
+            let result = previous?.smoothed(toward: fitted) ?? fitted
+            previous = result
+            return result
+        }
     }
 }
 

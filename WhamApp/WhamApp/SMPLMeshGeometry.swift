@@ -55,10 +55,12 @@ enum SMPLMeshGeometry {
 
     static func makeVideoOverlay(
         projectedVertices: [SIMD3<Float>],
+        cameraVertices: [SIMD3<Float>],
         viewportSize: CGSize,
         topology: SMPLTopology
     ) -> SCNGeometry? {
         guard projectedVertices.count == topology.vertexCount,
+              cameraVertices.count == topology.vertexCount,
               viewportSize.width > 0,
               viewportSize.height > 0 else {
             return nil
@@ -68,7 +70,18 @@ enum SMPLMeshGeometry {
         let vertices = projectedVertices.map {
             SIMD3<Float>($0.x - halfWidth, halfHeight - $0.y, $0.z)
         }
-        return makeSceneGeometry(vertices: vertices, topology: topology)
+        let lightingVertices = cameraVertices.map {
+            SIMD3<Float>($0.x, -$0.y, -$0.z)
+        }
+        let normals = vertexNormals(
+            vertices: lightingVertices,
+            faces: topology.indices
+        )
+        return makeSceneGeometry(
+            vertices: vertices,
+            normals: normals,
+            topology: topology
+        )
     }
 
     private static func makeSceneGeometry(
@@ -76,6 +89,18 @@ enum SMPLMeshGeometry {
         topology: SMPLTopology
     ) -> SCNGeometry {
         let normals = vertexNormals(vertices: vertices, faces: topology.indices)
+        return makeSceneGeometry(
+            vertices: vertices,
+            normals: normals,
+            topology: topology
+        )
+    }
+
+    private static func makeSceneGeometry(
+        vertices: [SIMD3<Float>],
+        normals: [SIMD3<Float>],
+        topology: SMPLTopology
+    ) -> SCNGeometry {
         let sceneVertices = vertices.map { SCNVector3($0.x, $0.y, $0.z) }
         let sceneNormals = normals.map { SCNVector3($0.x, $0.y, $0.z) }
         let indexData = topology.indices.withUnsafeBytes { Data($0) }

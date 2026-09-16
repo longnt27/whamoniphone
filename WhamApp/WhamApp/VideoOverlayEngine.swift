@@ -45,7 +45,8 @@ final class VideoOverlayEngine: ObservableObject, BodyPresentationControlling {
         keypointsWorld: [Float],
         meshVerticesWorld: [SIMD3<Float>]?,
         metadata: VideoOverlayMetadata,
-        viewportSize: CGSize
+        viewportSize: CGSize,
+        registration: VideoOverlayRegistration = .identity
     ) {
         guard keypointsWorld.count == 51,
               viewportSize.width > 0,
@@ -69,7 +70,8 @@ final class VideoOverlayEngine: ObservableObject, BodyPresentationControlling {
         let projectedJoints = SMPLVideoProjector.projectWorldToViewport(
             worldJoints,
             metadata: metadata,
-            viewportSize: viewportSize
+            viewportSize: viewportSize,
+            registration: registration
         )
         guard projectedJoints.count == 17 else {
             clear()
@@ -83,13 +85,24 @@ final class VideoOverlayEngine: ObservableObject, BodyPresentationControlling {
 
         if presentationMode == .mesh {
             if let topology, let meshVerticesWorld {
-                let projectedMesh = SMPLVideoProjector.projectWorldToViewport(
+                let cameraVertices = SMPLVideoProjector.worldToCamera(
                     meshVerticesWorld,
-                    metadata: metadata,
+                    metadata: metadata
+                )
+                let sourcePixels = registration.applying(
+                    to: SMPLVideoProjector.projectToSourcePixels(
+                        cameraVertices: cameraVertices,
+                        metadata: metadata
+                    )
+                )
+                let projectedMesh = SMPLVideoProjector.mapSourcePixelsToViewport(
+                    sourcePixels,
+                    sourceSize: metadata.sourceSize,
                     viewportSize: viewportSize
                 )
                 meshNode.geometry = SMPLMeshGeometry.makeVideoOverlay(
                     projectedVertices: projectedMesh,
+                    cameraVertices: cameraVertices,
                     viewportSize: viewportSize,
                     topology: topology
                 )
@@ -115,13 +128,13 @@ final class VideoOverlayEngine: ObservableObject, BodyPresentationControlling {
         let ambient = SCNNode()
         ambient.light = SCNLight()
         ambient.light?.type = .ambient
-        ambient.light?.intensity = 650
+        ambient.light?.intensity = 350
         scene.rootNode.addChildNode(ambient)
 
         let directional = SCNNode()
         directional.light = SCNLight()
         directional.light?.type = .directional
-        directional.light?.intensity = 900
+        directional.light?.intensity = 700
         directional.eulerAngles = SCNVector3(-0.35, 0.4, 0)
         scene.rootNode.addChildNode(directional)
 

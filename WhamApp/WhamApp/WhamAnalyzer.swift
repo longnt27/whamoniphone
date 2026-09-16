@@ -403,6 +403,33 @@ class WhamAnalyzer: ObservableObject {
             Float(observation.sourceSize.width),
             Float(observation.sourceSize.height)
         ]
+        if observation.keypoints.count >= 34,
+           observation.keypointMask.count >= 17 {
+            let cropSide = Float(cropBox.width)
+            let cropCenterX = Float(cropBox.midX)
+            let cropCenterY = Float(cropBox.midY)
+            var detectorPixels: [Float] = []
+            var detectorValidity: [Int] = []
+            detectorPixels.reserveCapacity(34)
+            detectorValidity.reserveCapacity(17)
+            for index in 0..<17 {
+                detectorPixels.append(
+                    cropCenterX
+                        + observation.keypoints[index * 2].floatValue
+                            * cropSide / 2
+                )
+                detectorPixels.append(
+                    cropCenterY
+                        + observation.keypoints[index * 2 + 1].floatValue
+                            * cropSide / 2
+                )
+                detectorValidity.append(
+                    observation.keypointMask[index].floatValue < 0.5 ? 1 : 0
+                )
+            }
+            result["detector_keypoints_pixels"] = detectorPixels
+            result["detector_keypoints_valid"] = detectorValidity
+        }
         result["overlay_projection"] = "HMR2 official crop camera to full frame"
     }
 

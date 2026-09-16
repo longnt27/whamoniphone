@@ -467,8 +467,8 @@ struct VideoOverlayView: View {
             return
         }
         let safeIndex = max(0, min(frameIndex, whamData.count - 1))
-        guard safeIndex != lastRenderedFrame,
-              let keypoints = whamFloatArray(whamData[safeIndex]["keypoints_3d"]),
+        guard safeIndex != lastRenderedFrame else { return }
+        guard let keypoints = whamFloatArray(whamData[safeIndex]["keypoints_3d"]),
               let metadata = VideoOverlayMetadata(
                 dictionary: whamData[safeIndex]
               ) else {

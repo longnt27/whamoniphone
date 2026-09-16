@@ -54,7 +54,11 @@ final class VideoOverlayEngine: ObservableObject, BodyPresentationControlling {
             return
         }
 
-        cameraNode.camera?.orthographicScale = Double(viewportSize.height)
+        // SceneKit's orthographicScale is the half-height of the visible
+        // camera volume. The projected coordinates below are expressed in
+        // UIKit points around the viewport centre, so using the full height
+        // compresses both position and size by exactly 2x toward the centre.
+        cameraNode.camera?.orthographicScale = Double(viewportSize.height / 2)
         let worldJoints = stride(from: 0, to: 51, by: 3).map {
             SIMD3<Float>(
                 keypointsWorld[$0],

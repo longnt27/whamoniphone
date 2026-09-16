@@ -146,6 +146,7 @@ struct WhamAppTests {
         #expect(engine.presentationMode == .mesh)
         #expect(meshNode.geometry != nil)
         #expect(meshNode.isHidden == false)
+        #expect(engine.cameraNode.camera?.orthographicScale == 120)
     }
 
     @Test func smplMeshCacheRoundTripsFloat16Frames() throws {

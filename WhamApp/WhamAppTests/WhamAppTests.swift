@@ -14,6 +14,26 @@ import UIKit
 
 struct WhamAppTests {
 
+    @Test func analysisCadenceDownsamplesSixtyFPSExactlyOncePerThirtyFPSBucket() {
+        var cadence = VideoAnalysisCadence(sourceFramesPerSecond: 60)
+        let decisions = (0..<7).map {
+            cadence.shouldProcess(time: Double($0) / 60)
+        }
+
+        #expect(decisions == [true, false, true, false, true, false, true])
+        #expect(cadence.framesPerSecond == 30)
+    }
+
+    @Test func analysisCadencePreservesVideoBelowThirtyFPS() {
+        var cadence = VideoAnalysisCadence(sourceFramesPerSecond: 24)
+        let decisions = (0..<7).map {
+            cadence.shouldProcess(time: Double($0) / 24)
+        }
+
+        #expect(decisions.allSatisfy { $0 })
+        #expect(cadence.framesPerSecond == 24)
+    }
+
     @Test func videoOverlayProjectsWithOfficialHMR2CropCamera() throws {
         let metadata = VideoOverlayMetadata(
             camera: SIMD3<Float>(2, 0, 0),

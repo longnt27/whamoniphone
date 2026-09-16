@@ -7,18 +7,33 @@
 
 import ARKit
 import AVFoundation
+import CoreMotion
 import SwiftUI
 
 class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
+    static let recordingFramesPerSecond = 30
+
     @Published var isRecording = false
     @Published var recordedSeconds: Int = 0
     @Published var lastThumbnail: UIImage?
 
     let session = ARSession()
     private let dataQueue = DispatchQueue(label: "com.wham.record", qos: .userInitiated)
-    private var slmData: [[String: Any]] = []
+    private let motionManager = CMMotionManager()
+    private let gyroQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.name = "com.wham.gyro"
+        queue.maxConcurrentOperationCount = 1
+        queue.qualityOfService = .userInitiated
+        return queue
+    }()
+    private let gyroLock = NSLock()
+    private var latestGyro = CMRotationRate()
+    private var sensorData: [[String: Any]] = []
     private var currentID: UUID?
     private var timer: Timer?
+    private var recordingResolution = CGSize(width: 1920, height: 1440)
+    private var lastRecordedFrameTimestamp: TimeInterval?
 
     // --- AVFoundation Core ---
     private var assetWriter: AVAssetWriter?
@@ -41,6 +56,15 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
     func resetTracking() {
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = [.horizontal]
+        if let format = ARWorldTrackingConfiguration.supportedVideoFormats
+            .filter({ $0.framesPerSecond == Self.recordingFramesPerSecond })
+            .max(by: {
+                $0.imageResolution.width * $0.imageResolution.height
+                    < $1.imageResolution.width * $1.imageResolution.height
+            }) {
+            config.videoFormat = format
+            recordingResolution = format.imageResolution
+        }
         session.run(config, options: [.resetTracking, .removeExistingAnchors])
     }
 
@@ -51,11 +75,13 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
     private func start() {
         let id = UUID()
         currentID = id
-        slmData.removeAll()
+        dataQueue.sync { sensorData.removeAll() }
+        lastRecordedFrameTimestamp = nil
         recordedSeconds = 0
         isReadyToRecord = false
 
         setupWriter(id: id)
+        startGyroscope()
 
         isRecording = true
 
@@ -66,13 +92,16 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
 
     private func stop() {
         isRecording = false
+        motionManager.stopGyroUpdates()
         timer?.invalidate()
 
         assetWriterInput?.markAsFinished()
         assetWriter?.finishWriting { [weak self] in
             guard let self = self, let id = self.currentID else { return }
-            self.saveRawSLAM(id: id)
-            DispatchQueue.main.async { self.loadLatestThumbnail() }
+            self.dataQueue.async {
+                self.saveSensorData(id: id)
+                DispatchQueue.main.async { self.loadLatestThumbnail() }
+            }
         }
     }
 
@@ -81,14 +110,25 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
             guard isRecording else { return }
 
             let ts = frame.timestamp
+            let minimumInterval = 1.0 / Double(Self.recordingFramesPerSecond)
+            if let previous = lastRecordedFrameTimestamp,
+               ts - previous < minimumInterval * 0.8 {
+                return
+            }
+            lastRecordedFrameTimestamp = ts
+
             let mat = frame.camera.transform
             let buffer = frame.capturedImage
             let presentationTime = CMTime(seconds: ts, preferredTimescale: 1000000)
+            let gyro = currentGyro()
 
             dataQueue.async { [weak self] in
                 let pos = mat.columns.3
                 let point: [String: Any] = [
                     "t": ts,
+                    "x": gyro.x,
+                    "y": gyro.y,
+                    "z": gyro.z,
                     "pos": ["x": pos.x, "y": pos.y, "z": pos.z],
                     "m": [
                         mat.columns.0.x, mat.columns.0.y, mat.columns.0.z, mat.columns.0.w,
@@ -97,7 +137,7 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
                         mat.columns.3.x, mat.columns.3.y, mat.columns.3.z, mat.columns.3.w
                     ]
                 ]
-                DispatchQueue.main.async { self?.slmData.append(point) }
+                self?.sensorData.append(point)
             }
 
             guard let writer = assetWriter,
@@ -128,8 +168,12 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
 
             let settings: [String: Any] = [
                 AVVideoCodecKey: AVVideoCodecType.h264,
-                AVVideoWidthKey: 1920,
-                AVVideoHeightKey: 1440
+                AVVideoWidthKey: Int(recordingResolution.width),
+                AVVideoHeightKey: Int(recordingResolution.height),
+                AVVideoCompressionPropertiesKey: [
+                    AVVideoExpectedSourceFrameRateKey:
+                        Self.recordingFramesPerSecond
+                ]
             ]
 
             assetWriterInput = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
@@ -156,11 +200,37 @@ class ARWhamManager: NSObject, ARSessionDelegate, ObservableObject {
         }
     }
 
-    private func saveRawSLAM(id: UUID) {
+    private func startGyroscope() {
+        gyroLock.lock()
+        latestGyro = CMRotationRate()
+        gyroLock.unlock()
+        guard motionManager.isGyroAvailable else { return }
+        motionManager.gyroUpdateInterval = 1.0 / 60.0
+        motionManager.startGyroUpdates(to: gyroQueue) { [weak self] data, _ in
+            guard let self, let data else { return }
+            self.gyroLock.lock()
+            self.latestGyro = data.rotationRate
+            self.gyroLock.unlock()
+        }
+    }
+
+    private func currentGyro() -> CMRotationRate {
+        gyroLock.lock()
+        defer { gyroLock.unlock() }
+        return latestGyro
+    }
+
+    private func saveSensorData(id: UUID) {
         let url = getURL(id: id, ext: "json")
-        if let data = try? JSONSerialization.data(withJSONObject: slmData, options: []) {
+        if let data = try? JSONSerialization.data(
+            withJSONObject: sensorData,
+            options: []
+        ) {
             try? data.write(to: url)
-            print("✅ Đã lưu SLAM thô: \(slmData.count) frames")
+            print(
+                "✅ Saved \(sensorData.count) synchronized 30 FPS "
+                    + "ARKit + gyro samples"
+            )
         }
     }
 

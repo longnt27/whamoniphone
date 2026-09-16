@@ -15,6 +15,28 @@ private struct GyroSample: Codable {
     let z: Double
 }
 
+struct VideoAnalysisCadence {
+    static let maximumFramesPerSecond = 30.0
+
+    let framesPerSecond: Double
+    private var lastProcessedBucket = -1
+
+    init(sourceFramesPerSecond: Double) {
+        framesPerSecond = min(
+            max(sourceFramesPerSecond, 1),
+            Self.maximumFramesPerSecond
+        )
+    }
+
+    mutating func shouldProcess(time: Double) -> Bool {
+        guard time.isFinite, time >= 0 else { return false }
+        let bucket = Int(floor(time * framesPerSecond + 1e-6))
+        guard bucket > lastProcessedBucket else { return false }
+        lastProcessedBucket = bucket
+        return true
+    }
+}
+
 @MainActor
 class WhamAnalyzer: ObservableObject {
     @Published var progress: Double = 0
@@ -42,7 +64,13 @@ class WhamAnalyzer: ObservableObject {
                 let transform = try await track.load(.preferredTransform)
                 let duration = try await asset.load(.duration).seconds
                 let nominalFPS = max(Double(try await track.load(.nominalFrameRate)), 1)
-                let estimatedFrames = max(Int(duration * nominalFPS), 1)
+                var cadence = VideoAnalysisCadence(
+                    sourceFramesPerSecond: nominalFPS
+                )
+                let estimatedFrames = max(
+                    Int(duration * cadence.framesPerSecond),
+                    1
+                )
                 let readerOutput = AVAssetReaderTrackOutput(track: track, outputSettings: [
                     kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
                 ])
@@ -86,6 +114,9 @@ class WhamAnalyzer: ObservableObject {
                     let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds
                     if firstPresentationTime == nil { firstPresentationTime = presentationTime }
                     let relativeTime = presentationTime - (firstPresentationTime ?? presentationTime)
+                    guard cadence.shouldProcess(time: relativeTime) else {
+                        continue
+                    }
 
                     let observation = try autoreleasepool { () throws -> MobileWhamFrameObservation in
                         guard let rawPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
@@ -241,9 +272,14 @@ class WhamAnalyzer: ObservableObject {
                         cameraAngularVelocity: cameraAngularVelocity,
                         state: &coreState
                     )
-                    let meshVertices = try SMPLMeshCache.vertices(
-                        from: step.verticesWorld
-                    )
+                    let meshVertices: [SIMD3<Float>]
+                    do {
+                        meshVertices = try SMPLMeshCache.vertices(
+                            from: step.verticesWorld
+                        )
+                    } catch SMPLMeshCache.CacheError.nonFiniteVertex {
+                        throw AnalyzerError.nonFiniteWorldOutput(frame: index)
+                    }
                     if results.isEmpty {
                         try meshWriter.appendWarmStartFrame(meshVertices)
                     } else {
@@ -327,7 +363,7 @@ class WhamAnalyzer: ObservableObject {
                 try finalData.write(to: outputURL, options: .atomic)
             }.value
 
-            statusMessage = "✅ Hoàn tất — WHAM + SMPL mesh"
+            statusMessage = "✅ Hoàn tất — WHAM 30 FPS + SMPL mesh"
             progress = 1
         } catch {
             print("❌ Analysis Failed: \(error)")
@@ -466,6 +502,7 @@ class WhamAnalyzer: ObservableObject {
         case readerFailed
         case insufficientFrames
         case initializationFailed
+        case nonFiniteWorldOutput(frame: Int)
         case meshFrameCountMismatch(expected: Int, actual: Int)
 
         var errorDescription: String? {
@@ -476,6 +513,8 @@ class WhamAnalyzer: ObservableObject {
             case .insufficientFrames: return "At least two decoded frames are required"
             case .initializationFailed:
                 return "HMR2-S could not initialize WHAM from the first frame"
+            case .nonFiniteWorldOutput(let frame):
+                return "WHAM world output became non-finite at frame \(frame)"
             case .meshFrameCountMismatch(let expected, let actual):
                 return "SMPL mesh produced \(actual) frames for \(expected) JSON frames"
             }

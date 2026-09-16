@@ -38,6 +38,15 @@ class WhamCaptureManager: NSObject, ObservableObject, AVCaptureFileOutputRecordi
         session.beginConfiguration()
         if session.canAddInput(input) { session.addInput(input) }
         if session.canAddOutput(movieOutput) { session.addOutput(movieOutput) }
+        do {
+            try device.lockForConfiguration()
+            let frameDuration = CMTime(value: 1, timescale: 30)
+            device.activeVideoMinFrameDuration = frameDuration
+            device.activeVideoMaxFrameDuration = frameDuration
+            device.unlockForConfiguration()
+        } catch {
+            print("⚠️ Could not lock camera to 30 FPS: \(error)")
+        }
         session.commitConfiguration()
 
         DispatchQueue.global(qos: .userInitiated).async {

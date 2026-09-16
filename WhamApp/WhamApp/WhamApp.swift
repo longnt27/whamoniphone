@@ -22,6 +22,10 @@ struct WhamApp: App {
                         Label("Benchmark", systemImage: "gauge.with.dots.needle.67percent")
                     }
             }
+            .tint(.blue)
+            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
+            .toolbarColorScheme(.dark, for: .tabBar)
         }
     }
 }

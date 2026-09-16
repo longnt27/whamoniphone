@@ -1,4 +1,5 @@
 import Foundation
+import CoreML
 
 enum SMPLMeshCache {
     static let fileExtension = "whammesh"
@@ -13,6 +14,7 @@ enum SMPLMeshCache {
         case invalidVertexCount(Int)
         case unexpectedVertexCount(expected: Int, actual: Int)
         case invalidFrameVertexCount(expected: Int, actual: Int)
+        case invalidTensorElementCount(expected: Int, actual: Int)
         case nonFiniteVertex
         case alreadyFinalized
         case invalidMagic
@@ -29,6 +31,8 @@ enum SMPLMeshCache {
                 return "Expected \(expected) SMPL vertices, cache contains \(actual)"
             case .invalidFrameVertexCount(let expected, let actual):
                 return "Expected \(expected) SMPL vertices, received \(actual)"
+            case .invalidTensorElementCount(let expected, let actual):
+                return "Expected \(expected) SMPL tensor values, received \(actual)"
             case .nonFiniteVertex:
                 return "SMPL mesh contains a non-finite coordinate"
             case .alreadyFinalized:
@@ -49,6 +53,34 @@ enum SMPLMeshCache {
 
     static func outputURL(forJSONURL url: URL) -> URL {
         url.deletingPathExtension().appendingPathExtension(fileExtension)
+    }
+
+    static func vertices(
+        from tensor: MLMultiArray,
+        expectedVertexCount: Int = SMPLMeshCache.expectedVertexCount
+    ) throws -> [SIMD3<Float>] {
+        let expectedValues = expectedVertexCount * 3
+        guard tensor.count == expectedValues else {
+            throw CacheError.invalidTensorElementCount(
+                expected: expectedValues,
+                actual: tensor.count
+            )
+        }
+        var vertices: [SIMD3<Float>] = []
+        vertices.reserveCapacity(expectedVertexCount)
+        for vertexIndex in 0..<expectedVertexCount {
+            let offset = vertexIndex * 3
+            let vertex = SIMD3<Float>(
+                tensor[offset].floatValue,
+                tensor[offset + 1].floatValue,
+                tensor[offset + 2].floatValue
+            )
+            guard vertex.x.isFinite, vertex.y.isFinite, vertex.z.isFinite else {
+                throw CacheError.nonFiniteVertex
+            }
+            vertices.append(vertex)
+        }
+        return vertices
     }
 
     final class Writer {
@@ -114,6 +146,11 @@ enum SMPLMeshCache {
             }
             try handle.write(contentsOf: payload)
             frameCount += 1
+        }
+
+        func appendWarmStartFrame(_ vertices: [SIMD3<Float>]) throws {
+            try append(vertices)
+            try append(vertices)
         }
 
         func finalize() throws {

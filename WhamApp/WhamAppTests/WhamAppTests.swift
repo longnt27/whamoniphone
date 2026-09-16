@@ -102,6 +102,48 @@ struct WhamAppTests {
         }
     }
 
+    @Test func smplMeshCacheWarmStartStaysIndexAlignedWithJSON() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("fixture.whammesh")
+        let firstInferredFrame = [SIMD3<Float>(1, 2, 3)]
+        let secondInferredFrame = [SIMD3<Float>(4, 5, 6)]
+        let writer = try SMPLMeshCache.Writer(outputURL: url, vertexCount: 1)
+
+        try writer.appendWarmStartFrame(firstInferredFrame)
+        try writer.append(secondInferredFrame)
+        try writer.finalize()
+
+        let reader = try SMPLMeshCache.Reader(url: url, expectedVertexCount: 1)
+        #expect(reader.frameCount == 3)
+        #expect(try reader.frame(at: 0) == firstInferredFrame)
+        #expect(try reader.frame(at: 1) == firstInferredFrame)
+        #expect(try reader.frame(at: 2) == secondInferredFrame)
+    }
+
+    @Test func smplMeshCacheConvertsCoreMLVertexTensor() throws {
+        let tensor = try MLMultiArray(shape: [1, 1, 2, 3], dataType: .float16)
+        let values: [Float] = [1, 2, 3, -4, -5, -6]
+        for index in values.indices {
+            tensor[index] = NSNumber(value: values[index])
+        }
+
+        let vertices = try SMPLMeshCache.vertices(
+            from: tensor,
+            expectedVertexCount: 2
+        )
+
+        #expect(vertices == [
+            SIMD3<Float>(1, 2, 3),
+            SIMD3<Float>(-4, -5, -6),
+        ])
+    }
+
     @Test func smplTopologyDecodesValidatedTriangleIndices() throws {
         let data = Data([
             83, 77, 80, 76, 70, 65, 67, 69, // SMPLFACE
@@ -172,6 +214,27 @@ struct WhamAppTests {
         #expect(engine.presentationMode == .skeleton)
         engine.setPresentationMode(.mesh)
         #expect(engine.presentationMode == .skeleton)
+    }
+
+    @Test func bodyPresentationDefaultsToMeshOnlyWhenComplete() {
+        #expect(
+            BodyPresentationMode.preferred(
+                meshCacheAvailable: true,
+                topologyAvailable: true
+            ) == .mesh
+        )
+        #expect(
+            BodyPresentationMode.preferred(
+                meshCacheAvailable: false,
+                topologyAvailable: true
+            ) == .skeleton
+        )
+        #expect(
+            BodyPresentationMode.preferred(
+                meshCacheAvailable: true,
+                topologyAvailable: false
+            ) == .skeleton
+        )
     }
 
     @Test func selectedMobilePipelineCatalogIsLocked() {

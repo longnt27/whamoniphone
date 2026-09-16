@@ -11,6 +11,13 @@ enum BodyPresentationMode: String, CaseIterable, Identifiable {
     case skeleton = "Skeleton"
 
     var id: Self { self }
+
+    static func preferred(
+        meshCacheAvailable: Bool,
+        topologyAvailable: Bool
+    ) -> BodyPresentationMode {
+        meshCacheAvailable && topologyAvailable ? .mesh : .skeleton
+    }
 }
 
 class Skeleton3DEngine: ObservableObject {

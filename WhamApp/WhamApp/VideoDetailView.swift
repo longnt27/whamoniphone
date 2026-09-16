@@ -145,18 +145,29 @@ struct NotAnalyzedView: View {
 struct AnalyzedTabView: View {
     let video: VideoModel
     @State private var whamData: [[String: Any]] = []
+    @State private var meshReader: SMPLMeshCache.Reader?
+    @State private var meshStatus = "Legacy result: no SMPL mesh cache"
 
     var body: some View {
         TabView {
             // TAB 1: Video with AR overlay
-            VideoOverlayView(videoURL: video.url, whamData: whamData)
+            VideoOverlayView(
+                videoURL: video.url,
+                whamData: whamData,
+                meshReader: meshReader,
+                meshStatus: meshStatus
+            )
                 .tabItem {
                     Image(systemName: "play.tv.fill")
                     Text("Video Overlay")
                 }
 
             // TAB 2: Pure 3D space
-            Wham3DView(whamData: whamData)
+            Wham3DView(
+                whamData: whamData,
+                meshReader: meshReader,
+                meshStatus: meshStatus
+            )
                 .tabItem {
                     Image(systemName: "cube.transparent.fill")
                     Text("3D World")
@@ -171,7 +182,51 @@ struct AnalyzedTabView: View {
         if let data = try? Data(contentsOf: video.whamOutputURL),
            let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
             self.whamData = json
+            do {
+                let reader = try SMPLMeshCache.Reader(url: video.smplMeshURL)
+                guard reader.frameCount == json.count else {
+                    meshStatus = "Mesh frame count does not match this result"
+                    meshReader = nil
+                    return
+                }
+                meshReader = reader
+                meshStatus = ""
+            } catch {
+                meshReader = nil
+                meshStatus = "SMPL mesh unavailable: \(error.localizedDescription)"
+            }
         }
+    }
+}
+
+private struct BodyPresentationPicker: View {
+    @ObservedObject var engine: Skeleton3DEngine
+    let meshCacheAvailable: Bool
+    let onChange: () -> Void
+
+    private var meshAvailable: Bool {
+        meshCacheAvailable && engine.meshAvailable
+    }
+
+    var body: some View {
+        Picker(
+            "Body rendering",
+            selection: Binding(
+                get: { engine.presentationMode },
+                set: { mode in
+                    engine.setPresentationMode(mode)
+                    onChange()
+                }
+            )
+        ) {
+            ForEach(BodyPresentationMode.allCases) { mode in
+                Text(mode.rawValue)
+                    .tag(mode)
+                    .disabled(mode == .mesh && !meshAvailable)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(maxWidth: 260)
     }
 }
 
@@ -179,20 +234,30 @@ struct AnalyzedTabView: View {
 struct VideoOverlayView: View {
     let videoURL: URL
     let whamData: [[String: Any]]
+    let meshReader: SMPLMeshCache.Reader?
+    let meshStatus: String
 
     @StateObject private var engine = Skeleton3DEngine()
     @State private var player: AVPlayer
+    @State private var lastRenderedFrame = -1
 
     let timer = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
-    init(videoURL: URL, whamData: [[String: Any]]) {
+    init(
+        videoURL: URL,
+        whamData: [[String: Any]],
+        meshReader: SMPLMeshCache.Reader?,
+        meshStatus: String
+    ) {
         self.videoURL = videoURL
         self.whamData = whamData
+        self.meshReader = meshReader
+        self.meshStatus = meshStatus
         _player = State(initialValue: AVPlayer(url: videoURL))
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             VideoPlayer(player: player)
                 .ignoresSafeArea()
 
@@ -204,6 +269,36 @@ struct VideoOverlayView: View {
             .background(Color.clear)
             .ignoresSafeArea()
             .allowsHitTesting(false)
+
+            VStack(spacing: 6) {
+                BodyPresentationPicker(
+                    engine: engine,
+                    meshCacheAvailable: meshReader != nil,
+                    onChange: refreshCurrentFrame
+                )
+                if engine.presentationMode == .skeleton && meshReader == nil {
+                    Text(meshStatus)
+                        .font(.caption2)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                } else if engine.presentationMode == .skeleton && !engine.meshAvailable {
+                    Text("Generate and bundle SMPLFaces.bin to enable mesh rendering")
+                        .font(.caption2)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                }
+            }
+            .padding(10)
+            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+            .padding(.top, 8)
+        }
+        .onAppear {
+            selectDefaultPresentation()
+            refreshCurrentFrame()
+        }
+        .onChange(of: meshReader?.frameCount) {
+            selectDefaultPresentation()
+            refreshCurrentFrame()
         }
         .onReceive(timer) { _ in
             guard whamData.count > 0 else { return }
@@ -212,20 +307,50 @@ struct VideoOverlayView: View {
             let fps: Double = 30.0
             let frameIndex = Int(currentTime * fps)
             let safeIndex = max(0, min(frameIndex, whamData.count - 1))
-
-            if let kp3d = whamData[safeIndex]["keypoints_3d"] as? [Float] {
-                engine.applyFrameData(keypoints3D: kp3d)
-            }
+            updateBody(frameIndex: safeIndex)
         }
         .onDisappear {
             player.pause()
         }
+    }
+
+    private func selectDefaultPresentation() {
+        engine.setPresentationMode(.preferred(
+            meshCacheAvailable: meshReader != nil,
+            topologyAvailable: engine.meshAvailable
+        ))
+    }
+
+    private func refreshCurrentFrame() {
+        lastRenderedFrame = -1
+        let frameIndex = Int(max(player.currentTime().seconds, 0) * 30)
+        updateBody(frameIndex: frameIndex)
+    }
+
+    private func updateBody(frameIndex: Int) {
+        guard !whamData.isEmpty else { return }
+        let safeIndex = max(0, min(frameIndex, whamData.count - 1))
+        guard safeIndex != lastRenderedFrame,
+              let keypoints = whamFloatArray(whamData[safeIndex]["keypoints_3d"]) else {
+            return
+        }
+
+        let vertices = engine.presentationMode == .mesh
+            ? try? meshReader?.frame(at: safeIndex)
+            : nil
+        engine.applyFrameData(
+            keypoints3D: keypoints,
+            meshVertices: vertices ?? nil
+        )
+        lastRenderedFrame = safeIndex
     }
 }
 
 // MARK: - TAB 2: The Pure 3D World
 struct Wham3DView: View {
     let whamData: [[String: Any]]
+    let meshReader: SMPLMeshCache.Reader?
+    let meshStatus: String
 
     @StateObject private var engine = Skeleton3DEngine()
     @State private var frameIndex = 0
@@ -241,7 +366,7 @@ struct Wham3DView: View {
             .ignoresSafeArea()
 
             VStack {
-                Text("WHAM 3D SKELETON")
+                Text("WHAM 3D \(engine.presentationMode.rawValue.uppercased())")
                     .font(.system(.caption, design: .monospaced))
                     .padding(8)
                     .background(Color.black.opacity(0.7))
@@ -252,6 +377,22 @@ struct Wham3DView: View {
                 Spacer()
 
                 VStack {
+                    BodyPresentationPicker(
+                        engine: engine,
+                        meshCacheAvailable: meshReader != nil,
+                        onChange: updateBody
+                    )
+
+                    if engine.presentationMode == .skeleton && meshReader == nil {
+                        Text(meshStatus)
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    } else if engine.presentationMode == .skeleton && !engine.meshAvailable {
+                        Text("SMPLFaces.bin is not bundled")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+
                     Text("Frame: \(frameIndex)")
                         .font(.caption)
                         .foregroundColor(.white)
@@ -260,7 +401,7 @@ struct Wham3DView: View {
                         get: { Double(frameIndex) },
                         set: { newVal in
                             frameIndex = Int(newVal)
-                            updateSkeleton()
+                            updateBody()
                         }
                     ), in: 0...Double(max(whamData.count - 1, 0)))
                 }
@@ -269,14 +410,43 @@ struct Wham3DView: View {
             }
         }
         .onAppear {
-            updateSkeleton()
+            engine.setPresentationMode(.preferred(
+                meshCacheAvailable: meshReader != nil,
+                topologyAvailable: engine.meshAvailable
+            ))
+            updateBody()
+        }
+        .onChange(of: meshReader?.frameCount) {
+            engine.setPresentationMode(.preferred(
+                meshCacheAvailable: meshReader != nil,
+                topologyAvailable: engine.meshAvailable
+            ))
+            updateBody()
         }
     }
 
-    private func updateSkeleton() {
+    private func updateBody() {
         guard frameIndex < whamData.count else { return }
-        if let kp3d = whamData[frameIndex]["keypoints_3d"] as? [Float] {
-            engine.applyFrameData(keypoints3D: kp3d)
-        }
+        guard let keypoints = whamFloatArray(
+            whamData[frameIndex]["keypoints_3d"]
+        ) else { return }
+        let vertices = engine.presentationMode == .mesh
+            ? try? meshReader?.frame(at: frameIndex)
+            : nil
+        engine.applyFrameData(
+            keypoints3D: keypoints,
+            meshVertices: vertices ?? nil
+        )
     }
+}
+
+private func whamFloatArray(_ value: Any?) -> [Float]? {
+    if let floats = value as? [Float] { return floats }
+    if let numbers = value as? [NSNumber] {
+        return numbers.map(\.floatValue)
+    }
+    if let doubles = value as? [Double] {
+        return doubles.map(Float.init)
+    }
+    return nil
 }

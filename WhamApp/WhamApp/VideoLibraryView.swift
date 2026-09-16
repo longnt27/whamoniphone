@@ -21,6 +21,10 @@ struct VideoModel: Identifiable, Hashable {
         return docs.appendingPathComponent("\(url.deletingPathExtension().lastPathComponent)_wham_output.json")
     }
 
+    var smplMeshURL: URL {
+        SMPLMeshCache.outputURL(forJSONURL: whamOutputURL)
+    }
+
     var hasGyro: Bool {
         return FileManager.default.fileExists(atPath: gyroJsonURL.path)
     }

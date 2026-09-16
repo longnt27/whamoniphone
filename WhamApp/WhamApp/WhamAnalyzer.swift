@@ -216,6 +216,9 @@ class WhamAnalyzer: ObservableObject {
                     firstKeypoints: observations[0].keypoints
                 )
                 var results: [[String: Any]] = []
+                let meshWriter = try SMPLMeshCache.Writer(
+                    outputURL: SMPLMeshCache.outputURL(forJSONURL: outputURL)
+                )
 
                 await MainActor.run {
                     self.statusMessage = "Đang chạy WHAM + world + smoothing (2/2)..."
@@ -234,6 +237,14 @@ class WhamAnalyzer: ObservableObject {
                         cameraAngularVelocity: cameraAngularVelocity,
                         state: &coreState
                     )
+                    let meshVertices = try SMPLMeshCache.vertices(
+                        from: step.verticesWorld
+                    )
+                    if results.isEmpty {
+                        try meshWriter.appendWarmStartFrame(meshVertices)
+                    } else {
+                        try meshWriter.append(meshVertices)
+                    }
 
                     results.append([
                         "frame": index,
@@ -270,6 +281,10 @@ class WhamAnalyzer: ObservableObject {
                     warmStart["smoothing_pose_alpha"] = TemporalOutputSmoother.selectedPoseAlpha
                     warmStart["smoothing_shape_alpha"] = TemporalOutputSmoother.selectedShapeAlpha
                     warmStart["camera_motion"] = gyroSamples.isEmpty ? "none" : "device_gyro_approximation"
+                    warmStart["smpl_mesh_file"] = SMPLMeshCache
+                        .outputURL(forJSONURL: outputURL)
+                        .lastPathComponent
+                    warmStart["smpl_vertex_count"] = SMPLMeshCache.expectedVertexCount
                     results.insert(warmStart, at: 0)
                 }
 
@@ -277,10 +292,17 @@ class WhamAnalyzer: ObservableObject {
                     withJSONObject: results,
                     options: [.prettyPrinted, .sortedKeys]
                 )
+                guard meshWriter.frameCount == results.count else {
+                    throw AnalyzerError.meshFrameCountMismatch(
+                        expected: results.count,
+                        actual: meshWriter.frameCount
+                    )
+                }
+                try meshWriter.finalize()
                 try finalData.write(to: outputURL, options: .atomic)
             }.value
 
-            statusMessage = "✅ Hoàn tất — pipeline YOLO26m/HMR2-S/adapter/WHAM/smoothing"
+            statusMessage = "✅ Hoàn tất — WHAM + SMPL mesh"
             progress = 1
         } catch {
             print("❌ Analysis Failed: \(error)")
@@ -387,6 +409,7 @@ class WhamAnalyzer: ObservableObject {
         case readerFailed
         case insufficientFrames
         case initializationFailed
+        case meshFrameCountMismatch(expected: Int, actual: Int)
 
         var errorDescription: String? {
             switch self {
@@ -396,6 +419,8 @@ class WhamAnalyzer: ObservableObject {
             case .insufficientFrames: return "At least two decoded frames are required"
             case .initializationFailed:
                 return "HMR2-S could not initialize WHAM from the first frame"
+            case .meshFrameCountMismatch(let expected, let actual):
+                return "SMPL mesh produced \(actual) frames for \(expected) JSON frames"
             }
         }
     }

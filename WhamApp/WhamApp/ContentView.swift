@@ -98,16 +98,6 @@ struct MainCameraView: View {
 
 struct ContentView: View {
     var body: some View {
-        TabView {
-            MainCameraView()
-                .tabItem {
-                    Label("AR Camera", systemImage: "camera.viewfinder")
-                }
-            
-            OfflineProcessView()
-                .tabItem {
-                    Label("Video Thầy", systemImage: "folder.badge.gearshape")
-                }
-        }
+        MainCameraView()
     }
 }

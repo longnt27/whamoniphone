@@ -16,11 +16,6 @@ struct WhamApp: App {
                     .tabItem {
                         Label("AR Camera", systemImage: "camera.viewfinder")
                     }
-                
-                OfflineProcessView()
-                    .tabItem {
-                        Label("Video Thầy", systemImage: "folder.badge.gearshape")
-                    }
 
                 BenchmarkView()
                     .tabItem {

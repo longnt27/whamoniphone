@@ -301,6 +301,7 @@ def run_phone_core(
     return {
         "pose": pred_pose,
         "kp3d": pred_kp3d,
+        "motion_context": motion_context,
         "root": pred_root[:, 1:],
         "velocity": pred_vel,
         "shape": pred_shape,

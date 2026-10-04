@@ -177,8 +177,13 @@ def run_phone_variant(
     observations: dict[str, Any],
     initializer: frozen_eval.FrozenSMPLInitializer,
     device: torch.device,
+    cam_angvel: torch.Tensor | None = None,
 ) -> dict[str, torch.Tensor]:
     frames = int(observations["frames"]) - 1
+    if cam_angvel is None:
+        cam_angvel = torch.zeros(1, frames, 6, device=device)
+    elif cam_angvel.shape != (1, frames, 6):
+        raise ValueError(f"Expected camera motion [1,{frames},6], got {tuple(cam_angvel.shape)}")
     first_pose = observations["pose"][:1].to(device)
     first_betas = observations["betas"][:1].to(device)
     init_joints = initializer(first_pose, first_betas).reshape(1, 1, 51)
@@ -194,7 +199,7 @@ def run_phone_variant(
         ),
         init_pose=first_pose.reshape(1, 1, 24, 6),
         init_root=first_pose[:, 0].reshape(1, 1, 6),
-        cam_angvel=torch.zeros(1, frames, 6, device=device),
+        cam_angvel=cam_angvel.to(device=device, dtype=first_pose.dtype),
     )
 
 

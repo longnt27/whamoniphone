@@ -119,6 +119,7 @@ def official_inputs(
     frames: int,
     prefix: str,
     device: torch.device,
+    use_target_first_root: bool = True,
 ) -> dict[str, torch.Tensor]:
     keypoints = feature_eval.to_numpy(labels[prefix + "kp2d"][index])
     bbox = feature_eval.to_numpy(labels[prefix + "bbox"][index])
@@ -141,12 +142,15 @@ def official_inputs(
         feature_eval.axis_angle_to_matrix(init_pose_axis_angle)
     ).reshape(1, 1, 24, 6)
 
-    target_first_root = torch.from_numpy(
-        feature_eval.to_numpy(labels["pose"][index])[0].astype(np.float32)
-    ).reshape(24, 3)[0]
-    init_root = feature_eval.matrix_to_rotation_6d(
-        feature_eval.axis_angle_to_matrix(target_first_root)
-    ).reshape(1, 1, 6)
+    if use_target_first_root:
+        target_first_root = torch.from_numpy(
+            feature_eval.to_numpy(labels["pose"][index])[0].astype(np.float32)
+        ).reshape(24, 3)[0]
+        init_root = feature_eval.matrix_to_rotation_6d(
+            feature_eval.axis_angle_to_matrix(target_first_root)
+        ).reshape(1, 1, 6)
+    else:
+        init_root = init_pose[:, :, 0].reshape(1, 1, 6)
     return {
         "x": torch.from_numpy(x_all[frame_slice]).unsqueeze(0).to(device),
         "mask": torch.from_numpy(mask_all[frame_slice]).unsqueeze(0).to(device),

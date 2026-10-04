@@ -21,13 +21,11 @@ import shutil
 import sys
 from pathlib import Path
 
-import coremltools as ct
 import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "evaluation"))
 
-from export_wham_image_step import load_network
 from hmr2s_frozen import HMR2S_CHECKPOINT_SHA256, checkpoint_smpl_buffers
 from smplx.lbs import lbs
 from torch import nn
@@ -224,6 +222,9 @@ def relative_error(reference: np.ndarray, actual: np.ndarray) -> float:
 
 
 def main() -> None:
+    import coremltools as ct  # Conversion is optional when reusing the PyTorch step for evaluation.
+    from export_wham_image_step import load_network
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--wham-repo", required=True, type=Path)
     parser.add_argument("--wham-checkpoint", required=True, type=Path)

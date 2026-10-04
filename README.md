@@ -5,7 +5,7 @@
 <h1 align="center">WHAM on iPhone</h1>
 
 <p align="center">
-  <strong>World-grounded 3D human motion reconstruction, entirely on-device.</strong>
+  <strong>3D human motion reconstruction, entirely on-device.</strong>
   <br>
   Record synchronized video and gyro, reconstruct a full SMPL body, and inspect it over the video or in a 3D world view.
 </p>
@@ -53,10 +53,10 @@ deform the body or alter WHAM's 3D result.
 | | |
 | --- | --- |
 | **Input** | 30 fps video + synchronized phone gyro |
-| **Output** | World joints, trajectory, pose, shape, and 6,890 SMPL vertices |
+| **Output** | Pose, shape, 6,890 SMPL vertices, and an unvalidated world-coordinate trajectory |
 | **Runtime** | Seven Core ML models with explicit recurrent state |
 | **Viewer** | Camera-aligned video overlay + interactive 3D world |
-| **Evaluation** | Untouched 3DPW test population after validation-only selection |
+| **Evaluation** | Camera-relative pose/shape on 11 selected 3DPW test tracks after validation-only selection |
 | **Measured device** | iPhone 11 Pro Max, iOS 18.6.2 |
 
 ## Why this exists
@@ -73,9 +73,9 @@ This is the selected pipeline—not the archived FastViT fallback:
 
 ## Measured results
 
-The mobile pipeline was selected on 3DPW validation and then evaluated once on
-the untouched 3DPW test population: **11 single-person tracks and 11,349
-poses**.
+The mobile pipeline was selected on 3DPW validation and then evaluated on
+**11 single-person 3DPW test tracks and 11,349 poses**. These are
+camera-relative body metrics, not world-trajectory accuracy.
 
 | Pipeline | PA-MPJPE ↓ | MPJPE ↓ | PVE ↓ | Acceleration error ↓ |
 | --- | ---: | ---: | ---: | ---: |
@@ -84,7 +84,9 @@ poses**.
 
 YOLO found a person in **99.52%** of source frames. The locked light smoother
 reduced raw mobile acceleration error by **14.43%** for only **0.03 mm** extra
-PA-MPJPE.
+PA-MPJPE. The parsed sequences have **143 skipped-frame transitions**; their
+effect on recurrent predictions has not been quantified, and the 30 fps
+acceleration calculation at those boundaries needs caution.
 
 ### Device workload
 
@@ -100,6 +102,16 @@ YOLO stall dominated the mean, so median latency is the representative typical
 number; tail reliability remains unresolved. The
 [full report](docs/FINAL_REPORT.md) contains the protocols, definitions,
 ablations, and raw-evidence hashes.
+
+Under a **separate custom 3DPW world-space protocol**, with ground-truth
+camera rotation supplied to both branches, first-frame-aligned world-joint
+error was **4.863 m for released-WHAM inputs** and **4.163 m for mobile inputs**.
+The mobile branch scored lower under that protocol, but root orientation was
+worse (23.27° versus 48.81°). The evaluator advanced recurrent state across
+143 skipped-frame transitions with zero camera motion at each gap. These are
+reported measurements with a known, unquantified time-gap bias—not the WHAM
+paper's EMDB-2 metric or an iPhone gyro-accuracy result. See the
+[full protocol and limits](docs/FINAL_REPORT.md#custom-3dpw-world-space-protocol).
 
 ## Architecture
 
@@ -231,8 +243,9 @@ selected network.
 - The pipeline follows the highest-confidence person; it has no multi-person
   identity tracker.
 - Phone gyro is an inexpensive camera-rotation signal, not an accuracy-equivalent
-  replacement for DPVO. Global trajectory accuracy still lacks synchronized
-  phone ground truth.
+  replacement for DPVO. The custom 3DPW world comparison uses ground-truth
+  camera rotation and a stated skipped-frame policy; it does not establish
+  real-phone global trajectory accuracy or gyro error.
 - The video overlay's YOLO-guided camera registration improves presentation but
   is not part of the reported 3DPW metrics and cannot correct pose or depth
   errors.

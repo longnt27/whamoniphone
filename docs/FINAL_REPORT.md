@@ -5,19 +5,26 @@
 The final app is a real, image-conditioned, frame-at-a-time WHAM pipeline:
 **YOLO26m-pose → released HMR2.0-S → a validation-selected residual token
 adapter → released WHAM init/recurrent/world steps → light output-only causal
-smoothing**. On the untouched 3DPW test population it reaches 51.80 mm
-PA-MPJPE, 92.06 mm MPJPE, 107.20 mm PVE, and 10.72 m/s² acceleration error.
+smoothing**. On the selected, camera-relative 3DPW test population it reaches
+51.80 mm PA-MPJPE, 92.06 mm MPJPE, 107.20 mm PVE, and 10.72 m/s² acceleration
+error under the parsed-frame protocol described below.
 That is materially worse than released WHAM with official stored inputs, but it
 is no longer a disconnected fallback. On an iPhone 11 Pro Max, the typical
 measured workload is 187.13 ms per source frame, or about 5.34 fps, after
 warm-up. The complete compiled model set is 243.8 MB and the measured peak
 resident memory is 381.6 MB. This is viable for offline or low-rate mobile
-processing; it is not a 30 fps result.
+processing; it is not a 30 fps result. A separate **custom 3DPW world-space
+protocol** measured the two branches with ground-truth camera rotation; its
+results are reported below with the important limitation that recurrent state
+advances across 143 missing-frame gaps. It does not measure the phone's gyro or
+establish accuracy on continuous video.
 
-All final numbers below trace to the immutable files in
+The locked camera-relative and device numbers trace to the immutable files in
 [`evaluation/results/selected`](../evaluation/results/selected). Their hashes
 and cross-report identities are checked by
 [`validate_final_evidence.py`](../tools/evaluation/validate_final_evidence.py).
+The later custom-protocol world-space archives are stored separately, with their
+own artifact manifests and SHA-256 hashes.
 
 ## What was actually built
 
@@ -120,8 +127,14 @@ and [`selected artifact`](../evaluation/results/selected/selected_deployment_art
 The locked comparison uses all 11 matching single-person 3DPW test tracks with
 a valid initializer detection: 11,360 source frames and 11,349 recurrent poses.
 YOLO found a person in 11,306 frames, a 99.52% detection rate. Missing detections
-remain in the temporal sequence through the keypoint and image-feature validity
-masks rather than silently deleting time.
+remain in the parsed temporal sequence through keypoint and image-feature
+validity masks. Separately, the parsed 3DPW frame IDs contain 143 noncontiguous
+transitions. Neither branch reconstructs those unobserved source frames:
+recurrent state advances once between retained frames, even across a gap. This
+limits interpretation of temporal results, especially acceleration error,
+which assumes 30 fps spacing. The spatial metrics describe this specified
+parsed-frame comparison; they do not prove performance on uninterrupted raw
+video.
 
 The released-WHAM reference uses its official stored ViTPose/HMR2a inputs and
 flip averaging. The mobile row uses YOLO26m-pose, released HMR2-S pose/shape
@@ -179,6 +192,63 @@ while adding only 0.03 mm PA-MPJPE, 0.16 mm MPJPE, and 0.17 mm PVE. The result
 supports this modest filter, not arbitrary extra smoothing. The complete
 ablation is in the
 [`smoothing report`](../evaluation/results/selected/hmr2s_temporal_smoothing_3dpw.json).
+
+## Custom 3DPW world-space protocol
+
+After the locked body-pose comparison, two additional 3DPW experiments tried
+to assess global motion. A camera-input ablation replaced zero angular input
+with **3DPW ground-truth camera rotation**; it did not simulate or measure the
+iPhone's gyroscope. A paired experiment then fed that same oracle rotation to
+released WHAM and the mobile frontend, using the same PyTorch implementation
+of the exported iPhone world step for both. Both used the same 11 tracks and
+11,349 recurrent frames. The paired run exactly reproduced the locked
+camera-relative pose metrics, so it did not accidentally change that
+population or those outputs.
+
+The paired run used 3DPW ground-truth camera rotation at adjacent frames,
+zero camera input at nonadjacent transitions, and the same recurrent world-step
+implementation in both branches. It aligned the predicted and ground-truth
+world joints once at the first frame of each full track **for scoring only**,
+without scale fitting or resetting every 100 frames. On this **specific,
+reproducible protocol**:
+
+| Measure, mean over 11,349 frames | Released WHAM inputs | Mobile inputs |
+| --- | ---: | ---: |
+| First-frame-aligned world-joint error | 4.863 m | 4.163 m |
+| Root displacement error | 4.870 m | 4.151 m |
+| Root orientation error | 23.27° | 48.81° |
+
+The mobile branch has **0.700 m lower world-joint error** under this protocol,
+while its root orientation is **25.54° worse**. This is a mixed observed result,
+not a claim of superior general world motion. The 143 gaps are part of the
+protocol: at each one, camera motion is set to zero and recurrent state moves
+straight to the next retained observation. Elapsed motion is omitted, so
+integrated trajectories can drift for methodological reasons; the effect need
+not cancel between branches. The earlier camera-input ablation used the same
+gap policy. In that separate mobile-only ablation, changing zero camera input
+to ground-truth rotation improved root orientation error from 59.39° to 48.69°,
+while its simpler integrated-velocity world-joint error increased from 3.684 m
+to 3.821 m. That ablation did **not** use the paired run's exported world
+refiner, so its meter values should not be compared across the two experiments.
+
+This was also a custom metric, not the WHAM paper's protocol. The
+[paper](https://arxiv.org/html/2312.07531) and its
+[3DPW evaluator](https://github.com/yohanshin/WHAM/blob/2b54f7797391c94876848b905ed875b154c4a295/lib/eval/evaluate_3dpw.py)
+evaluate 3DPW pose and shape in camera coordinates. For global motion the
+paper uses EMDB 2, reporting 100-frame world-joint metrics plus whole-trajectory
+root translation error. A one-alignment-per-full-3DPW-track error is not
+numerically comparable to those results. The original side here also used
+cached official frontend inputs and the phone-exported world-step implementation,
+not a separately executed end-to-end desktop app. The raw, hash-identified
+[paired](../evaluation/results/diagnostic/paired_world_full11_3dpw_reports.zip)
+and [camera-input](../evaluation/results/diagnostic/camera_oracle_full11_3dpw_reports.zip)
+archives preserve the per-track values and exact protocol.
+
+Consequently the study reports a **custom, oracle-camera 3DPW world-space
+comparison with known skipped-frame bias**, not a WHAM-paper-equivalent score,
+not phone-gyro accuracy, and not an estimate of uninterrupted on-device
+trajectory accuracy. The app does produce world-coordinate SMPL output;
+producing it and validating its accuracy on the phone are different claims.
 
 ## Core ML conversion
 
@@ -318,9 +388,15 @@ only possible memory schedule.
 - Released WHAM's row uses official stored inputs, while the mobile row measures
   a different live frontend. The gap is the complete practical substitution
   cost, not an isolated measure of YOLO or HMR2-S alone.
-- 3DPW provides no synchronized phone gyro for this app, so no global trajectory
-  accuracy claim is made. A synchronized iPhone/ground-truth capture or an
-  appropriate licensed benchmark is required to validate the gyro path.
+- 3DPW provides no synchronized phone gyro for this app. The world-space
+  figures are valid outputs of this project's stated oracle-camera protocol,
+  but that protocol treats 143 parsed-frame gaps as single recurrent steps
+  with zero camera motion. Its resulting bias is unquantified, so those figures
+  are not WHAM-paper-equivalent or evidence of real-phone trajectory accuracy.
+- The same parsed-frame gaps also limit interpretation of temporal acceleration
+  at gap boundaries and may affect recurrent pose predictions. Camera-relative
+  spatial results are reported for this specific parsed test protocol, not
+  claimed to be gap-free raw-video evaluation.
 - The device workload has only five measured clips. Its median is useful; its
   tail percentiles are not yet statistically stable, and one YOLO stall
   dominates the mean.
@@ -332,7 +408,7 @@ only possible memory schedule.
 - Mesh playback consumes about 74 MB of cache storage per minute at 30 fps and
   has not yet received a separate rendering-energy or frame-time benchmark.
 
-## Conclusion and next experiment
+## Conclusion
 
 The project achieved the narrow goal that the original prototype had not: the
 iPhone executes the selected image-conditioned HMR/WHAM/SMPL pipeline with real
@@ -341,8 +417,8 @@ locked accuracy-versus-latency report. The cost is roughly 5.34 fps typical
 throughput and a 59–66% increase in the three spatial errors versus released
 WHAM's official-input reference.
 
-The next engineering task is to measure SceneKit playback frame time, energy,
-and cache pressure separately from model inference. The next scientific tasks
-are to quantify pixel-registration error on held-out video, collect longer
-on-device latency samples, and evaluate synchronized camera/gyro trajectory
-accuracy—not run another round of uncontrolled encoder retraining.
+This is the conclusion supported by the available evidence, not a claim of
+world-space parity. The 3DPW camera-relative comparison, small physical-phone
+workload, and custom oracle-camera world-space comparison are all reported with
+their distinct protocols and limits. No additional training or benchmark run
+is required to state that bounded conclusion.
